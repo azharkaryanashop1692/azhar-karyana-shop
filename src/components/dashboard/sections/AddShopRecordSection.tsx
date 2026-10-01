@@ -120,8 +120,10 @@ export default function AddShopRecordSection() {
     const totalSale = todayTotal + exp;
     // Mock rule: assume a flat 8% margin on goods and 4% on mobile load.
     const profit = Math.round((totalSale - loadSold) * 0.08 + loadSold * 0.04);
-    const remainingPrev = previousCash;
-    return { exp, todayTotal, cashPayableTotal, loadSold, totalSale, profit, remainingPrev };
+    const loadExp = expenses.filter((e) => e.status === "Load").reduce((a, e) => a + e.price, 0);
+    const otherExp = exp - loadExp;
+    const remainingPrev = previousCash - otherExp;
+    return { exp, loadExp, otherExp, todayTotal, cashPayableTotal, loadSold, totalSale, profit, remainingPrev };
   }, [todayCash, cashPayable, load, expenses]);
 
   return (
@@ -224,9 +226,19 @@ export default function AddShopRecordSection() {
                 </div>
               ))
             )}
-            <div className="flex items-center justify-between border-t border-white/10 pt-3 text-sm">
-              <span className="font-semibold text-muted">Total Expenses</span>
-              <span className="font-semibold text-danger">{formatRs(totals.exp)}</span>
+            <div className="space-y-2 border-t border-white/10 pt-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-muted">Load Expenses</span>
+                <span className="font-semibold text-danger">{formatRs(totals.loadExp)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-muted">Other Expenses</span>
+                <span className="font-semibold text-danger">{formatRs(totals.otherExp)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-muted">Remaining Previous Cash</span>
+                <span className="font-semibold text-accent">{formatRs(totals.remainingPrev)}</span>
+              </div>
             </div>
           </div>
         </Card>
