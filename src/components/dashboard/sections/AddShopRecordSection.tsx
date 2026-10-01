@@ -89,6 +89,7 @@ export default function AddShopRecordSection() {
   const [cashPayable, setCashPayable] = useState<NumMap>({});
   const [load, setLoad] = useState<Record<string, LoadRow>>({});
 
+  const [profit, setProfit] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -119,11 +120,8 @@ export default function AddShopRecordSection() {
     const todayTotal = sum(todayCash);
     const cashPayableTotal = sum(cashPayable);
     const remainingCash = todayTotal - cashPayableTotal;
-    const loadSold = Object.values(load).reduce((a, r) => a + num(r.sold), 0);
     const exp = expenses.reduce((a, e) => a + e.price, 0);
     const totalSale = todayTotal + exp;
-    // Mock rule: assume a flat 8% margin on goods and 4% on mobile load.
-    const profit = Math.round((totalSale - loadSold) * 0.08 + loadSold * 0.04);
     const loadExp = expenses.filter((e) => e.status === "Load").reduce((a, e) => a + e.price, 0);
     const otherExp = exp - loadExp;
     const remainingPrev = previousCash - otherExp;
@@ -131,7 +129,7 @@ export default function AddShopRecordSection() {
       .filter(([op]) => op !== "Jazzcash")
       .reduce((a, [, r]) => a + num(r.current) + num(r.purchased) - num(r.sold), 0);
     const additionalLoad = Math.max(0, remainingLoad - ADDITIONAL_LOAD_THRESHOLD);
-    return { exp, loadExp, otherExp, additionalLoad, todayTotal, cashPayableTotal, remainingCash,loadSold, totalSale, profit, remainingPrev };
+    return { exp, loadExp, otherExp, additionalLoad, todayTotal, cashPayableTotal, remainingCash, totalSale, remainingPrev };
   }, [todayCash, cashPayable, load, expenses]);
 
   return (
@@ -327,8 +325,19 @@ export default function AddShopRecordSection() {
       <Card className="bg-gradient-to-br from-[#2b2b2b] via-[#1f2a22] to-[#1a1a1a]">
         <CardHeader title="Sale" subtitle="Auto-calculated from the record above" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <SaleStat label="Today Cash" value={formatRs(totals.todayTotal)} />
-          <SaleStat label="Profit" value={formatRs(totals.profit)} tone={totals.profit < 0 ? "danger" : "accent"} />
+          <SaleStat
+            label="Today Cash"
+            value={formatRs(totals.remainingCash)}
+            tone={totals.remainingCash < 0 ? "danger" : undefined}
+          />
+          <label className="block rounded-xl border border-white/5 bg-[#1a1a1a] p-4">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted">Profit</span>
+            <NumInput
+              value={profit}
+              onChange={setProfit}
+              className="mt-1 text-xl font-bold text-accent"
+            />
+          </label>
           <SaleStat
             label="Remaining Previous Cash"
             value={formatRs(totals.remainingPrev)}
