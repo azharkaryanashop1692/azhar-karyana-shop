@@ -263,8 +263,9 @@ function AddExpenseModal({
 }) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [status, setStatus] = useState<ExpenseStatus | "">("");
+  const [status, setStatus] = useState<ExpenseStatus>(EXPENSE_STATUSES[0]);
   const [error, setError] = useState("");
+  const canSubmit = name.trim() !== "" && price !== "";
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -276,9 +277,8 @@ function AddExpenseModal({
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!name.trim()) return setError("Enter the expense thing name.");
+    if (!canSubmit) return;
     if (num(price) <= 0) return setError("Enter a price greater than 0.");
-    if (!status) return setError("Select a status.");
     onAdd({ name: name.trim(), price: num(price), status });
   };
 
@@ -329,10 +329,9 @@ function AddExpenseModal({
               <span className="relative block">
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as ExpenseStatus | "")}
+                  onChange={(e) => setStatus(e.target.value as ExpenseStatus)}
                   className={cn(inputClass, "appearance-none pr-9")}
                 >
-                  <option value="">Select Status</option>
                   {EXPENSE_STATUSES.map((s) => (
                     <option key={s} value={s}>
                       {s}
@@ -353,7 +352,8 @@ function AddExpenseModal({
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-[#00e676]"
+                disabled={!canSubmit}
+                className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-[#00e676] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-zinc-500"
               >
                 <Plus className="size-4" />
                 Add Expense
