@@ -118,6 +118,7 @@ export default function AddShopRecordSection() {
   const totals = useMemo(() => {
     const todayTotal = sum(todayCash);
     const cashPayableTotal = sum(cashPayable);
+    const remainingCash = todayTotal - cashPayableTotal;
     const loadSold = Object.values(load).reduce((a, r) => a + num(r.sold), 0);
     const exp = expenses.reduce((a, e) => a + e.price, 0);
     const totalSale = todayTotal + exp;
@@ -130,7 +131,7 @@ export default function AddShopRecordSection() {
       .filter(([op]) => op !== "Jazzcash")
       .reduce((a, [, r]) => a + num(r.current) + num(r.purchased) - num(r.sold), 0);
     const additionalLoad = Math.max(0, remainingLoad - ADDITIONAL_LOAD_THRESHOLD);
-    return { exp, loadExp, otherExp, additionalLoad, todayTotal, cashPayableTotal, loadSold, totalSale, profit, remainingPrev };
+    return { exp, loadExp, otherExp, additionalLoad, todayTotal, cashPayableTotal, remainingCash,loadSold, totalSale, profit, remainingPrev };
   }, [todayCash, cashPayable, load, expenses]);
 
   return (
@@ -207,6 +208,18 @@ export default function AddShopRecordSection() {
                   <td className="pt-3 font-semibold text-muted">Total</td>
                   <td className="pl-2 pt-3 font-semibold text-accent">{formatRs(totals.todayTotal)}</td>
                   <td className="pl-2 pt-3 font-semibold text-danger">{formatRs(totals.cashPayableTotal)}</td>
+                </tr>
+                <tr>
+                  <td className="pt-3 font-semibold text-muted">Remaining Cash</td>
+                  <td
+                    colSpan={2}
+                    className={cn(
+                      "pl-2 pt-3 font-semibold",
+                      totals.remainingCash < 0 ? "text-danger" : "text-accent",
+                    )}
+                  >
+                    {formatRs(totals.remainingCash)}
+                  </td>
                 </tr>
               </tbody>
             </table>
