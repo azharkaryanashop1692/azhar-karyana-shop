@@ -12,6 +12,8 @@ const EXPENSE_STATUSES = ["Load", "Other"] as const;
 type ExpenseStatus = (typeof EXPENSE_STATUSES)[number];
 type Expense = { name: string; price: number; status: ExpenseStatus };
 
+const CASH_PAYABLE_TITLES = ["Hafiz", "Telenor", "Jazz", "Zong1", "Zong2", "Waqas", "Abu", "Others"];
+
 const EMPTY_LOAD_ROW: LoadRow = { current: "", purchased: "", sold: "" };
 
 const num = (v: string | undefined) => Number(v) || 0;
@@ -107,7 +109,7 @@ export default function AddShopRecordSection() {
         <Card className="xl:col-span-3">
           <CardHeader title="Cash Record" subtitle="Today cash and payable amount across all accounts" />
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[420px] text-sm">
+            <table className="w-full min-w-[480px] text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-muted">
                   <th className="pb-2 font-medium">Account</th>
@@ -116,23 +118,31 @@ export default function AddShopRecordSection() {
                 </tr>
               </thead>
               <tbody>
-                {cashAccounts.map((acc) => (
-                  <tr key={acc}>
-                    <td className="py-1.5 pr-2 font-medium text-white">{acc}</td>
-                    <td className="py-1.5 pl-2">
-                      <NumInput
-                        value={todayCash[acc] ?? ""}
-                        onChange={(v) => setTodayCash((m) => ({ ...m, [acc]: v }))}
-                      />
-                    </td>
-                    <td className="py-1.5 pl-2">
-                      <NumInput
-                        value={cashPayable[acc] ?? ""}
-                        onChange={(v) => setCashPayable((m) => ({ ...m, [acc]: v }))}
-                      />
-                    </td>
-                  </tr>
-                ))}
+                {cashAccounts.map((acc, i) => {
+                  const payTitle = CASH_PAYABLE_TITLES[i];
+                  return (
+                    <tr key={acc}>
+                      <td className="py-1.5 pr-2 font-medium text-white">{acc}</td>
+                      <td className="py-1.5 pl-2">
+                        <NumInput
+                          value={todayCash[acc] ?? ""}
+                          onChange={(v) => setTodayCash((m) => ({ ...m, [acc]: v }))}
+                        />
+                      </td>
+                      <td className="py-1.5 pl-2">
+                        {payTitle && (
+                          <label className="flex items-center gap-2">
+                            <span className="w-16 shrink-0 text-sm font-medium text-white">{payTitle}</span>
+                            <NumInput
+                              value={cashPayable[payTitle] ?? ""}
+                              onChange={(v) => setCashPayable((m) => ({ ...m, [payTitle]: v }))}
+                            />
+                          </label>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
                 <tr className="border-t border-white/10">
                   <td className="pt-3 font-semibold text-muted">Total</td>
                   <td className="pl-2 pt-3 font-semibold text-accent">{formatRs(totals.todayTotal)}</td>
