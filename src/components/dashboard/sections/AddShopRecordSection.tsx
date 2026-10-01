@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Plus, Save, Wallet, X } from "lucide-react";
-import { cashAccounts, loadOperators, payableAccounts, previousCash } from "../mockData";
+import { cashAccounts, loadOperators, previousCash } from "../mockData";
 import { Card, CardHeader, cn, formatRs } from "../ui";
 import { saveShopRecord } from "@/app/dashboard/actions";
 
@@ -84,7 +84,6 @@ export default function AddShopRecordSection() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [todayCash, setTodayCash] = useState<NumMap>({});
   const [cashPayable, setCashPayable] = useState<NumMap>({});
-  const [payable, setPayable] = useState<NumMap>({});
   const [load, setLoad] = useState<Record<string, LoadRow>>({});
 
   const [saving, setSaving] = useState(false);
@@ -102,7 +101,7 @@ export default function AddShopRecordSection() {
     }
     setSaving(true);
     setSaveMsg(null);
-    const { error } = await saveShopRecord(row);
+    const { error } = await saveShopRecord(row, expenses);
     setSaving(false);
     setSaveMsg(error ? { ok: false, text: error } : { ok: true, text: "Record saved." });
   };
@@ -116,15 +115,14 @@ export default function AddShopRecordSection() {
   const totals = useMemo(() => {
     const todayTotal = sum(todayCash);
     const cashPayableTotal = sum(cashPayable);
-    const payableTotal = sum(payable);
     const loadSold = Object.values(load).reduce((a, r) => a + num(r.sold), 0);
     const exp = expenses.reduce((a, e) => a + e.price, 0);
     const totalSale = todayTotal + exp;
     // Mock rule: assume a flat 8% margin on goods and 4% on mobile load.
     const profit = Math.round((totalSale - loadSold) * 0.08 + loadSold * 0.04);
     const remainingPrev = previousCash;
-    return { exp, todayTotal, cashPayableTotal, payableTotal, loadSold, totalSale, profit, remainingPrev };
-  }, [todayCash, cashPayable, payable, load, expenses]);
+    return { exp, todayTotal, cashPayableTotal, loadSold, totalSale, profit, remainingPrev };
+  }, [todayCash, cashPayable, load, expenses]);
 
   return (
     <div className="space-y-6">
@@ -206,22 +204,29 @@ export default function AddShopRecordSection() {
           </div>
         </Card>
 
-        {/* Payable amounts */}
+        {/* Expenses linked to this record */}
         <Card className="xl:col-span-2">
-          <CardHeader title="Payable Amount" subtitle="Amounts owed per account" />
+          <CardHeader title="Expenses" subtitle="Expenses linked with this record" />
           <div className="space-y-3">
-            {payableAccounts.map((acc) => (
-              <label key={acc} className="flex items-center gap-3">
-                <span className="w-28 shrink-0 text-sm font-medium text-white">{acc}</span>
-                <NumInput
-                  value={payable[acc] ?? ""}
-                  onChange={(v) => setPayable((m) => ({ ...m, [acc]: v }))}
-                />
-              </label>
-            ))}
+            {expenses.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted">No expenses added yet.</p>
+            ) : (
+              expenses.map((e, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-[#1a1a1a] px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-white">{e.name}</p>
+                    <p className="text-xs text-muted">{e.status}</p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold text-danger">{formatRs(e.price)}</span>
+                </div>
+              ))
+            )}
             <div className="flex items-center justify-between border-t border-white/10 pt-3 text-sm">
-              <span className="font-semibold text-muted">Total Payable</span>
-              <span className="font-semibold text-danger">{formatRs(totals.payableTotal)}</span>
+              <span className="font-semibold text-muted">Total Expenses</span>
+              <span className="font-semibold text-danger">{formatRs(totals.exp)}</span>
             </div>
           </div>
         </Card>
