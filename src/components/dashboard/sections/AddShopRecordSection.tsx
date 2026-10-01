@@ -47,6 +47,9 @@ const LOAD_PREFIXES: Record<string, string> = {
   Jazzcash: "jazzcash",
 };
 
+// Remaining load (excluding Jazzcash) above this counts as additional load.
+const ADDITIONAL_LOAD_THRESHOLD = 40000;
+
 const EMPTY_LOAD_ROW: LoadRow = { current: "", purchased: "", sold: "" };
 
 const num = (v: string | undefined) => Number(v) || 0;
@@ -123,7 +126,11 @@ export default function AddShopRecordSection() {
     const loadExp = expenses.filter((e) => e.status === "Load").reduce((a, e) => a + e.price, 0);
     const otherExp = exp - loadExp;
     const remainingPrev = previousCash - otherExp;
-    return { exp, loadExp, otherExp, todayTotal, cashPayableTotal, loadSold, totalSale, profit, remainingPrev };
+    const remainingLoad = Object.entries(load)
+      .filter(([op]) => op !== "Jazzcash")
+      .reduce((a, [, r]) => a + num(r.current) + num(r.purchased) - num(r.sold), 0);
+    const additionalLoad = Math.max(0, remainingLoad - ADDITIONAL_LOAD_THRESHOLD);
+    return { exp, loadExp, otherExp, additionalLoad, todayTotal, cashPayableTotal, loadSold, totalSale, profit, remainingPrev };
   }, [todayCash, cashPayable, load, expenses]);
 
   return (
@@ -291,6 +298,15 @@ export default function AddShopRecordSection() {
               })}
             </tbody>
           </table>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <div className="w-full rounded-xl border border-white/5 bg-[#1a1a1a] p-4 sm:w-72">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted">Additional Load</p>
+            <p className="mt-1 text-2xl font-bold text-accent">{formatRs(totals.additionalLoad)}</p>
+            <p className="mt-1 text-xs text-muted">
+              Remaining load (excl. Jazzcash) above {ADDITIONAL_LOAD_THRESHOLD.toLocaleString("en-US")}
+            </p>
+          </div>
         </div>
       </Card>
 
