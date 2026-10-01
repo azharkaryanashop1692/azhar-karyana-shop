@@ -47,8 +47,8 @@ function NumInput({
 export default function AddShopRecordSection() {
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [prevCash, setPrevCash] = useState<NumMap>({});
   const [todayCash, setTodayCash] = useState<NumMap>({});
+  const [cashPayable, setCashPayable] = useState<NumMap>({});
   const [payable, setPayable] = useState<NumMap>({});
   const [load, setLoad] = useState<Record<string, LoadRow>>({});
 
@@ -59,17 +59,17 @@ export default function AddShopRecordSection() {
     }));
 
   const totals = useMemo(() => {
-    const prevTotal = sum(prevCash);
     const todayTotal = sum(todayCash);
+    const cashPayableTotal = sum(cashPayable);
     const payableTotal = sum(payable);
     const loadSold = Object.values(load).reduce((a, r) => a + num(r.sold), 0);
     const exp = expenses.reduce((a, e) => a + e.price, 0);
-    const totalSale = todayTotal - prevTotal + exp;
+    const totalSale = todayTotal + exp;
     // Mock rule: assume a flat 8% margin on goods and 4% on mobile load.
     const profit = Math.round((totalSale - loadSold) * 0.08 + loadSold * 0.04);
-    const remainingPrev = previousCash - prevTotal;
-    return { exp, prevTotal, todayTotal, payableTotal, loadSold, totalSale, profit, remainingPrev };
-  }, [prevCash, todayCash, payable, load, expenses]);
+    const remainingPrev = previousCash;
+    return { exp, todayTotal, cashPayableTotal, payableTotal, loadSold, totalSale, profit, remainingPrev };
+  }, [todayCash, cashPayable, payable, load, expenses]);
 
   return (
     <div className="space-y-6">
@@ -105,14 +105,14 @@ export default function AddShopRecordSection() {
       <div className="grid gap-6 xl:grid-cols-5">
         {/* Cash denominations */}
         <Card className="xl:col-span-3">
-          <CardHeader title="Cash Record" subtitle="Previous vs. today cash across all accounts" />
+          <CardHeader title="Cash Record" subtitle="Today cash and payable amount across all accounts" />
           <div className="overflow-x-auto">
             <table className="w-full min-w-[420px] text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-muted">
                   <th className="pb-2 font-medium">Account</th>
-                  <th className="pb-2 pl-2 font-medium">Previous Cash</th>
                   <th className="pb-2 pl-2 font-medium">Today Cash</th>
+                  <th className="pb-2 pl-2 font-medium">Payable Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -121,22 +121,22 @@ export default function AddShopRecordSection() {
                     <td className="py-1.5 pr-2 font-medium text-white">{acc}</td>
                     <td className="py-1.5 pl-2">
                       <NumInput
-                        value={prevCash[acc] ?? ""}
-                        onChange={(v) => setPrevCash((m) => ({ ...m, [acc]: v }))}
+                        value={todayCash[acc] ?? ""}
+                        onChange={(v) => setTodayCash((m) => ({ ...m, [acc]: v }))}
                       />
                     </td>
                     <td className="py-1.5 pl-2">
                       <NumInput
-                        value={todayCash[acc] ?? ""}
-                        onChange={(v) => setTodayCash((m) => ({ ...m, [acc]: v }))}
+                        value={cashPayable[acc] ?? ""}
+                        onChange={(v) => setCashPayable((m) => ({ ...m, [acc]: v }))}
                       />
                     </td>
                   </tr>
                 ))}
                 <tr className="border-t border-white/10">
                   <td className="pt-3 font-semibold text-muted">Total</td>
-                  <td className="pl-2 pt-3 font-semibold text-white">{formatRs(totals.prevTotal)}</td>
                   <td className="pl-2 pt-3 font-semibold text-accent">{formatRs(totals.todayTotal)}</td>
+                  <td className="pl-2 pt-3 font-semibold text-danger">{formatRs(totals.cashPayableTotal)}</td>
                 </tr>
               </tbody>
             </table>
