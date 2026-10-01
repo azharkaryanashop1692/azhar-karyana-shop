@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Plus, Save, Wallet, X } from "lucide-react";
 import { cashAccounts, loadOperators, payableAccounts, previousCash } from "../mockData";
 import { Card, CardHeader, cn, formatRs } from "../ui";
+import { saveShopRecord } from "@/app/dashboard/actions";
 
 type NumMap = Record<string, string>;
 type LoadRow = { current: string; purchased: string; sold: string };
@@ -13,6 +14,38 @@ type ExpenseStatus = (typeof EXPENSE_STATUSES)[number];
 type Expense = { name: string; price: number; status: ExpenseStatus };
 
 const CASH_PAYABLE_TITLES = ["Hafiz", "Telenor", "Jazz", "Zong1", "Zong2", "Waqas", "Abu", "Others"];
+
+// shop_history column names for each input.
+const CASH_COLUMNS: Record<string, string> = {
+  "Cash 10/20": "cash_10_20",
+  "Cash 50/100": "cash_50_100",
+  "Cash 500/1000/5000": "cash_500_1000",
+  Jazzcash: "jazzcash",
+  Easypaisa: "easypaisa",
+  Abbas: "abbas",
+  Waqas: "waqas",
+  Azhar: "azhar",
+  Tassawar: "tassawar",
+};
+const PAYABLE_COLUMNS: Record<string, string> = {
+  Hafiz: "pay_hafiz",
+  Telenor: "pay_telenor",
+  Jazz: "pay_jazz",
+  Zong1: "pay_zong1",
+  Zong2: "pay_zong2",
+  Waqas: "pay_waqas",
+  Abu: "pay_abu",
+  Others: "pay_others",
+};
+const LOAD_PREFIXES: Record<string, string> = {
+  Hafiz: "hafiz",
+  Telenor: "telenor",
+  Jazz: "jazz",
+  Ufone: "ufone",
+  "Zong 1": "zong1",
+  "Zong 2": "zong2",
+  Jazzcash: "jazzcash",
+};
 
 const EMPTY_LOAD_ROW: LoadRow = { current: "", purchased: "", sold: "" };
 
@@ -54,7 +87,27 @@ export default function AddShopRecordSection() {
   const [payable, setPayable] = useState<NumMap>({});
   const [load, setLoad] = useState<Record<string, LoadRow>>({});
 
-  const updateLoad = (op: string, key: keyof LoadRow, v: string) =>
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const saveRecord = async () => {
+    const row: Record<string, number> = {};
+    for (const [acc, col] of Object.entries(CASH_COLUMNS)) row[col] = num(todayCash[acc]);
+    for (const [title, col] of Object.entries(PAYABLE_COLUMNS)) row[col] = num(cashPayable[title]);
+    for (const [op, prefix] of Object.entries(LOAD_PREFIXES)) {
+      const r = load[op];
+      row[`${prefix}_current`] = num(r?.current);
+      row[`${prefix}_purchased`] = num(r?.purchased);
+      row[`${prefix}_sold`] = num(r?.sold);
+    }
+    setSaving(true);
+    setSaveMsg(null);
+    const { error } = await saveShopRecord(row);
+    setSaving(false);
+    setSaveMsg(error ? { ok: false, text: error } : { ok: true, text: "Record saved." });
+  };
+
+  const updateLoad =(op: string, key: keyof LoadRow, v: string) =>
     setLoad((l) => ({
       ...l,
       [op]: { ...(l[op] ?? EMPTY_LOAD_ROW), [key]: v },
@@ -240,13 +293,18 @@ export default function AddShopRecordSection() {
             <p className="mt-1 text-2xl font-bold">{formatRs(totals.totalSale)}</p>
           </div>
         </div>
-        <div className="mt-5 flex justify-end">
+        <div className="mt-5 flex items-center justify-end gap-4">
+          {saveMsg && (
+            <p className={cn("text-sm", saveMsg.ok ? "text-accent" : "text-danger")}>{saveMsg.text}</p>
+          )}
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-accent hover:text-black"
+            onClick={saveRecord}
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-accent hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Save className="size-4" />
-            Save Record
+            {saving ? "Saving..." : "Save Record"}
           </button>
         </div>
       </Card>
