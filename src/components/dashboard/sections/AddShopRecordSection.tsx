@@ -299,7 +299,7 @@ export default function AddShopRecordSection() {
             </tbody>
           </table>
         </div>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-start">
           <div className="w-full rounded-xl border border-white/5 bg-[#1a1a1a] p-4 sm:w-72">
             <p className="text-xs font-medium uppercase tracking-wide text-muted">Additional Load</p>
             <p className="mt-1 text-2xl font-bold text-accent">{formatRs(totals.additionalLoad)}</p>
