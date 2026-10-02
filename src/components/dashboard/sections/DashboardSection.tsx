@@ -17,21 +17,21 @@ export default function DashboardSection({
         <KpiCard icon={TriangleAlert} label="Today Orders" value={kpis.todayOrders} tone="danger" />
       </div>
 
-      {/* Orders + Shop needs */}
+      {/* Shop history + Shop needs */}
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader
-            title="Orders"
+            title="Shop History"
             subtitle="Latest transactions with staff creator..."
-            onViewAll={() => onNavigate("orders")}
+            onViewAll={() => onNavigate("history")}
           />
           <div className="overflow-x-auto">
             <table className="w-full min-w-[420px] text-sm">
               <thead>
                 <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wide text-muted">
                   <th className="pb-3 font-medium">Creator</th>
-                  <th className="pb-3 font-medium">Sale (RS)</th>
-                  <th className="pb-3 text-right font-medium">Profit (RS)</th>
+                  <th className="pb-3 font-medium">Profit (RS)</th>
+                  <th className="pb-3 text-right font-medium">Sale (RS)</th>
                 </tr>
               </thead>
               <tbody>
@@ -45,12 +45,12 @@ export default function DashboardSection({
                         <span className="font-medium text-white">{o.creator}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 text-white">{formatRs(o.sale)}</td>
-                    <td className="py-3.5 text-right">
+                    <td className="py-3.5">
                       <Badge tone={o.profit >= 0 ? "green" : "red"}>
                         {o.profit >= 0 ? "+" : "-"} {formatRs(Math.abs(o.profit))}
                       </Badge>
                     </td>
+                    <td className="py-3.5 text-right text-white">{formatRs(o.sale)}</td>
                   </tr>
                 ))}
               </tbody>
