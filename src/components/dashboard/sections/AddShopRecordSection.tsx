@@ -169,12 +169,15 @@ export default function AddShopRecordSection({
   editId = null,
   editDetail = null,
   history = null,
+  onSaved,
 }: {
   editId?: number | null;
   /** Cached record being edited (from Shop History): fills the form instantly. */
   editDetail?: ShopRecordDetail | null;
   /** Cached Shop History, used for Previous Cash / Current until the server answers. */
   history?: ShopHistoryRecord[] | null;
+  /** Called after a successful save/update (the layout refreshes its cached history). */
+  onSaved?: () => void;
 }) {
   // Initial form: the edited record if cached, else empty with Current from the cached previous record.
   const [initial] = useState(() => {
@@ -265,6 +268,17 @@ export default function AddShopRecordSection({
     setSaveMsg(
       error ? { ok: false, text: error } : { ok: true, text: editId !== null ? "Record updated." : "Record saved." },
     );
+    if (!error) onSaved?.();
+  };
+
+  // New date: show Previous Cash / Current from the cached history right away;
+  // the effect above then confirms them from the server.
+  const changePublishDate = (date: string) => {
+    setPublishDate(date);
+    const previous = previousFromHistory(history, date);
+    if (!previous) return;
+    setPreviousCash(previous.totalCash);
+    if (editId === null) setLoad((l) => withCurrent(l, previous.remaining));
   };
 
   const updateLoad =(op: string, key: keyof LoadRow, v: string) =>
@@ -549,7 +563,7 @@ export default function AddShopRecordSection({
           <input
             type="date"
             value={publishDate}
-            onChange={(e) => setPublishDate(e.target.value)}
+            onChange={(e) => changePublishDate(e.target.value)}
             aria-label="Publish date"
             suppressHydrationWarning
             className="rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-2.5 text-sm text-white [color-scheme:dark] focus:border-accent/60 focus:outline-none"

@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { NAV_ITEMS, type TabId } from "./navigation";
-import type { ShopHistoryRecord } from "@/app/dashboard/actions";
+import { getShopHistory, type ShopHistoryRecord } from "@/app/dashboard/actions";
 import type { Order } from "@/app/dashboard/orderActions";
 import type { Person } from "@/app/dashboard/peopleActions";
 import type { Product } from "@/app/dashboard/productActions";
@@ -70,6 +70,12 @@ export default function DashboardLayout({
         editId={editRecordId}
         editDetail={history?.find((r) => r.id === editRecordId)?.detail ?? null}
         history={history}
+        onSaved={() => {
+          // Keep the cached Shop History current so Previous Cash / Current stay instant.
+          getShopHistory().then(({ records, error }) => {
+            if (!error) setHistory(records);
+          });
+        }}
       />
     ),
     history: <ShopHistorySection onEdit={editRecord} records={history} setRecords={setHistory} />,
