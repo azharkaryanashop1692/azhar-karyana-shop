@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Plus, Save, Wallet, X } from "lucide-react";
+import { ChevronDown, Plus, Save, Trash2, Wallet, X } from "lucide-react";
 import { cashAccounts, loadOperators } from "../mockData";
 import { Card, CardHeader, cn, formatRs, playBeep } from "../ui";
 import {
@@ -417,11 +417,19 @@ export default function AddShopRecordSection({
                   key={i}
                   className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-[#1a1a1a] px-3 py-2"
                 >
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-white">{e.name}</p>
                     <p className="text-xs text-muted">{e.status}</p>
                   </div>
                   <span className="shrink-0 text-sm font-semibold text-danger">{formatRs(e.price)}</span>
+                  <button
+                    type="button"
+                    onClick={() => setExpenses((list) => list.filter((_, j) => j !== i))}
+                    aria-label={`Delete expense ${e.name}`}
+                    className="grid size-8 shrink-0 place-items-center rounded-lg text-danger transition hover:bg-danger/15"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
                 </div>
               ))
             )}
