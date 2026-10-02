@@ -13,6 +13,7 @@ import {
   cn,
   formatRs,
   matches,
+  playBeep,
 } from "../ui";
 
 const inputBase =
@@ -43,12 +44,6 @@ export default function OrdersSection({
   const [editing, setEditing] = useState<Order | "new" | null>(null);
   const [viewing, setViewing] = useState<Order | null>(null);
   const [deleting, setDeleting] = useState<Order | null>(null);
-
-  const reload = async () => {
-    const { orders, error } = await getOrders();
-    if (error) setLoadError(error);
-    else setOrders(() => orders);
-  };
 
   // Show the cached orders immediately, then refresh them in the background.
   useEffect(() => {
@@ -112,9 +107,15 @@ export default function OrdersSection({
         <OrderFormModal
           order={editing === "new" ? null : editing}
           onClose={() => setEditing(null)}
-          onSaved={() => {
+          onSaved={(saved) => {
             setEditing(null);
-            reload();
+            // Show the saved order right away: replace it if updated, else add it first.
+            setOrders((os) => {
+              const list = os ?? [];
+              return list.some((o) => o.id === saved.id)
+                ? list.map((o) => (o.id === saved.id ? saved : o))
+                : [saved, ...list];
+            });
           }}
         />
       )}
@@ -233,7 +234,7 @@ function OrderFormModal({
   /** null = create a new order. */
   order: Order | null;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (order: Order) => void;
 }) {
   const isEdit = order !== null;
   const [name, setName] = useState(order?.name ?? "");
@@ -256,12 +257,13 @@ function OrderFormModal({
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!canSubmit) return;
+    playBeep();
     setBusy(true);
     setError("");
-    const { error } = await saveOrder(name, items, order?.id);
+    const { order: saved, error } = await saveOrder(name, items, order?.id);
     setBusy(false);
-    if (error) setError(error);
-    else onSaved();
+    if (saved) onSaved(saved);
+    else setError(error ?? "Could not save the order.");
   };
 
   return (
@@ -391,6 +393,7 @@ function DeleteOrderModal({
   const [error, setError] = useState("");
 
   const confirmDelete = async () => {
+    playBeep();
     setBusy(true);
     setError("");
     const { error } = await deleteOrder(order.id);

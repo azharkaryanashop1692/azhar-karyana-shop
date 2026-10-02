@@ -45,7 +45,7 @@ export async function saveOrder(
   name: string,
   items: OrderItem[],
   id?: number,
-): Promise<{ error?: string }> {
+): Promise<{ order?: Order; error?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -64,17 +64,17 @@ export async function saveOrder(
   // Order price = sum of all items' prices.
   const price = cleanItems.reduce((a, i) => a + i.price, 0);
 
-  let orderId: number;
+  let saved: { id: number; creator_email: string | null; created_at: string };
   if (id) {
     const { data, error } = await supabase
       .from("orders")
       .update({ name: orderName, price })
       .eq("id", id)
-      .select("id")
+      .select("id, creator_email, created_at")
       .maybeSingle();
     if (error) return { error: error.message };
     if (!data) return { error: "Order not found." };
-    orderId = data.id;
+    saved = data;
 
     const { error: delError } = await supabase.from("order_items").delete().eq("order_id", id);
     if (delError) return { error: `Order updated, but items failed: ${delError.message}` };
@@ -82,19 +82,28 @@ export async function saveOrder(
     const { data, error } = await supabase
       .from("orders")
       .insert({ name: orderName, price, creator_email: user.email ?? null })
-      .select("id")
+      .select("id, creator_email, created_at")
       .single();
     if (error) return { error: error.message };
-    orderId = data.id;
+    saved = data;
   }
 
   const { error: itemsError } = await supabase
     .from("order_items")
-    .insert(cleanItems.map((i) => ({ order_id: orderId, name: i.name, price: i.price })));
+    .insert(cleanItems.map((i) => ({ order_id: saved.id, name: i.name, price: i.price })));
   if (itemsError) {
     return { error: `Order ${id ? "updated" : "created"}, but items failed: ${itemsError.message}` };
   }
-  return {};
+  return {
+    order: {
+      id: saved.id,
+      name: orderName,
+      price,
+      creator: saved.creator_email ?? "Unknown",
+      createdAt: saved.created_at,
+      items: cleanItems,
+    },
+  };
 }
 
 export async function deleteOrder(id: number): Promise<{ error?: string }> {
