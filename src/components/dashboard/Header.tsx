@@ -23,7 +23,7 @@ export default function Header({
         </button>
         <div className="min-w-0">
           <h1 className="truncate text-lg font-semibold text-white sm:text-xl">
-            Welcome back, Rana G
+            Welcome back, Azhar Karyana Store
           </h1>
           <p className="truncate text-xs text-muted sm:text-sm">{title}</p>
         </div>
