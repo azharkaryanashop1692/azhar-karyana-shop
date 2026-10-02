@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { RefreshCw } from "lucide-react";
-import { getShopNeeds, saveShopNeeds } from "@/app/dashboard/actions";
+import { Save } from "lucide-react";
+import { saveShopNeeds } from "@/app/dashboard/actions";
 import { Card, CardHeader, cn } from "../ui";
 
 export default function ShopNeedsSection({
@@ -13,26 +13,15 @@ export default function ShopNeedsSection({
   text: string;
   setText: (text: string) => void;
 }) {
-  const [spinning, setSpinning] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
 
-  // Reload the saved text from the current user's shop_needs.
-  const refresh = async () => {
-    setSpinning(true);
-    const { text, error } = await getShopNeeds();
-    setSpinning(false);
-    if (error) setStatus({ ok: false, text: error });
-    else {
-      setText(text);
-      setStatus(null);
-    }
-  };
-
-  // Enter still adds a new line; afterwards the whole text is saved.
-  const onKeyUp = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key !== "Enter") return;
-    setStatus({ ok: true, text: "Saving..." });
-    const { error } = await saveShopNeeds(e.currentTarget.value);
+  // Save the whole text into the current user's shop_needs.
+  const save = async () => {
+    setSaving(true);
+    setStatus(null);
+    const { error } = await saveShopNeeds(text);
+    setSaving(false);
     setStatus(error ? { ok: false, text: error } : { ok: true, text: "Saved" });
   };
 
@@ -41,11 +30,12 @@ export default function ShopNeedsSection({
       <CardHeader title="Shop Needs" subtitle="Write down everything the shop needs to restock">
         <button
           type="button"
-          onClick={refresh}
-          aria-label="Refresh"
-          className="ml-auto grid size-9 place-items-center rounded-lg bg-white/5 text-muted ring-1 ring-white/10 transition hover:bg-accent hover:text-black"
+          onClick={save}
+          disabled={saving}
+          className="ml-auto inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#00e676] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <RefreshCw className={spinning ? "size-4 animate-spin" : "size-4"} />
+          <Save className="size-4" />
+          {saving ? "Saving..." : "Save"}
         </button>
       </CardHeader>
       <textarea
@@ -54,7 +44,6 @@ export default function ShopNeedsSection({
           setText(e.target.value);
           if (status?.text === "Saved") setStatus(null);
         }}
-        onKeyUp={onKeyUp}
         placeholder="Type here..."
         className="min-h-[400px] w-full flex-1 resize-none rounded-xl border border-white/10 bg-[#1a1a1a] p-4 text-sm leading-relaxed text-zinc-200 placeholder:text-muted focus:border-accent/60 focus:outline-none"
       />
