@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Plus, Save, Wallet, X } from "lucide-react";
-import { cashAccounts, loadOperators, previousCash } from "../mockData";
+import { cashAccounts, loadOperators } from "../mockData";
 import { Card, CardHeader, cn, formatRs } from "../ui";
-import { saveShopRecord } from "@/app/dashboard/actions";
+import { getPreviousCash, saveShopRecord } from "@/app/dashboard/actions";
 
 type NumMap = Record<string, string>;
 type LoadRow = { current: string; purchased: string; sold: string };
@@ -97,6 +97,18 @@ export default function AddShopRecordSection() {
 
   const [profit, setProfit] = useState("");
   const [publishDate, setPublishDate] = useState(todayIso);
+  const [previousCash, setPreviousCash] = useState(0);
+
+  // Previous Cash = Total Cash of the latest record published before the selected date.
+  useEffect(() => {
+    let active = true;
+    getPreviousCash(publishDate).then((v) => {
+      if (active) setPreviousCash(v);
+    });
+    return () => {
+      active = false;
+    };
+  }, [publishDate]);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -139,7 +151,7 @@ export default function AddShopRecordSection() {
       .reduce((a, [, r]) => a + num(r.current) + num(r.purchased) - num(r.sold), 0);
     const additionalLoad = Math.max(0, remainingLoad - ADDITIONAL_LOAD_THRESHOLD);
     return { exp, loadExp, otherExp, additionalLoad, todayTotal, cashPayableTotal, remainingCash, totalSale, remainingPrev };
-  }, [todayCash, cashPayable, load, expenses, profit]);
+  }, [todayCash, cashPayable, load, expenses, profit, previousCash]);
 
   return (
     <div className="space-y-6">
@@ -151,7 +163,7 @@ export default function AddShopRecordSection() {
           </div>
           <div>
             <p className="text-sm text-muted">Previous Cash</p>
-            <p className="text-3xl font-bold text-white">RS. {previousCash}</p>
+            <p className="text-3xl font-bold text-white">{formatRs(previousCash)}</p>
           </div>
         </Card>
         <Card className="flex flex-col justify-center gap-3">

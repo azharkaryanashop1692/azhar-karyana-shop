@@ -5,6 +5,26 @@ import { createClient } from "@/lib/supabase/server";
 export type ShopHistoryRow = Record<string, number>;
 export type ExpenseInput = { name: string; price: number; status: "Load" | "Other" };
 
+/** Total Cash of the latest shop_history record published before `beforeDate` (YYYY-MM-DD). */
+export async function getPreviousCash(beforeDate: string): Promise<number> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(beforeDate)) return 0;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const { data } = await supabase
+    .from("shop_history")
+    .select("total_cash")
+    .lt("publish_date", beforeDate)
+    .order("publish_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return Number(data?.total_cash) || 0;
+}
+
 export async function saveShopRecord(
   row: ShopHistoryRow,
   expenses: ExpenseInput[] = [],
