@@ -103,6 +103,8 @@ export default function AddShopRecordSection() {
       row[`${prefix}_purchased`] = num(r?.purchased);
       row[`${prefix}_sold`] = num(r?.sold);
     }
+    // Total Cash = Today Cash (Sale panel, i.e. remaining cash) + Profit
+    row.total_cash = sum(todayCash) - sum(cashPayable) + num(profit);
     setSaving(true);
     setSaveMsg(null);
     const { error } = await saveShopRecord(row, expenses);
