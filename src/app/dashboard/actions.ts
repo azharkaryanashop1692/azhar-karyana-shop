@@ -3,6 +3,9 @@
 import { createClient } from "@/lib/supabase/server";
 
 export type ShopHistoryRow = Record<string, number>;
+
+/** Shop History keeps at most this many records; saving a new one deletes the oldest. */
+const MAX_HISTORY_RECORDS = 60;
 export type ExpenseInput = { name: string; price: number; status: "Load" | "Other" };
 
 /** The current user's saved Shop Needs text ("" if none). */
@@ -238,6 +241,30 @@ export async function saveShopRecord(
     );
     if (expError) {
       return { error: `Record ${id ? "updated" : "saved"}, but expenses failed: ${expError.message}` };
+    }
+  }
+
+  if (!id) {
+    // New record: keep at most MAX_HISTORY_RECORDS by deleting the oldest by publish date
+    // (never the new one). Runs only after the save succeeded, so a failed save never loses old records.
+    const { data: older, error: listError } = await supabase
+      .from("shop_history")
+      .select("id")
+      .neq("id", record.id)
+      .order("publish_date", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (listError) return { error: `Record saved, but cleanup failed: ${listError.message}` };
+    const excess = older.length + 1 - MAX_HISTORY_RECORDS;
+    if (excess > 0) {
+      // Their expenses are removed by the foreign key's ON DELETE CASCADE.
+      const { error: pruneError } = await supabase
+        .from("shop_history")
+        .delete()
+        .in(
+          "id",
+          older.slice(0, excess).map((r) => r.id),
+        );
+      if (pruneError) return { error: `Record saved, but cleanup failed: ${pruneError.message}` };
     }
   }
 
