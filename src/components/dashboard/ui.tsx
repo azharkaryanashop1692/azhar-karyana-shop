@@ -136,10 +136,12 @@ export function StatusSelect({
   value,
   onChange,
   options,
+  placeholder = "Select Status",
 }: {
   value: string;
   onChange: (v: string) => void;
   options: string[];
+  placeholder?: string;
 }) {
   return (
     <label className="relative block">
@@ -148,7 +150,7 @@ export function StatusSelect({
         onChange={(e) => onChange(e.target.value)}
         className="w-full appearance-none rounded-xl border border-white/10 bg-[#1a1a1a] py-2.5 pl-3 pr-9 text-sm text-white focus:border-accent/60 focus:outline-none sm:w-44"
       >
-        <option value="">Select Status</option>
+        <option value="">{placeholder}</option>
         {options.map((o) => (
           <option key={o} value={o}>
             {o}

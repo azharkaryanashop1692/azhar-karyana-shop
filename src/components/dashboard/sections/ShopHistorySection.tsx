@@ -9,29 +9,45 @@ import {
   Card,
   EditDeleteActions,
   EmptyState,
-  SearchInput,
   StatusSelect,
-  matches,
 } from "../ui";
+
+/** "MM/DD/YYYY" -> "YYYY-MM-DD" to compare with the date picker value. */
+function toIsoDate(d: string) {
+  const [m, day, y] = d.split("/");
+  return `${y}-${m}-${day}`;
+}
 
 export default function ShopHistorySection() {
   const [records, setRecords] = useState(shopHistory);
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
+  const [creator, setCreator] = useState("");
+  const [date, setDate] = useState(""); // YYYY-MM-DD from the date picker
 
+  const creators = [...new Set(records.map((r) => r.user))];
   const visible = records.filter(
-    (r) => (!status || r.status === status) && matches(query, r.user, r.note, r.id, r.date),
+    (r) => (!creator || r.user === creator) && (!date || toIsoDate(r.date) === date),
   );
 
   return (
     <div className="space-y-6">
       <ActionBar>
-        <SearchInput value={query} onChange={setQuery} />
-        <StatusSelect value={status} onChange={setStatus} options={["Open", "Closed"]} />
+        <StatusSelect
+          value={creator}
+          onChange={setCreator}
+          options={creators}
+          placeholder="Select Creator"
+        />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          aria-label="Filter by date"
+          className="w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-2.5 text-sm text-white [color-scheme:dark] focus:border-accent/60 focus:outline-none sm:w-48"
+        />
       </ActionBar>
 
       {visible.length === 0 ? (
-        <EmptyState>No history records match your search.</EmptyState>
+        <EmptyState>No history records match the selected filters.</EmptyState>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {visible.map((r) => (
