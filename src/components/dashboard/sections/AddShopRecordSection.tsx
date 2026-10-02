@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Plus, Save, Wallet, X } from "lucide-react";
 import { cashAccounts, loadOperators } from "../mockData";
 import { Card, CardHeader, cn, formatRs } from "../ui";
-import { getPreviousCash, saveShopRecord } from "@/app/dashboard/actions";
+import { getPreviousRecord, saveShopRecord } from "@/app/dashboard/actions";
 
 type NumMap = Record<string, string>;
 type LoadRow = { current: string; purchased: string; sold: string };
@@ -100,11 +100,21 @@ export default function AddShopRecordSection() {
   const [publishDate, setPublishDate] = useState(todayIso);
   const [previousCash, setPreviousCash] = useState(0);
 
-  // Previous Cash = Total Cash of the latest record published before the selected date.
+  // From the latest record published before the selected date:
+  // Previous Cash = its Total Cash, and each operator's Current = its remaining load.
   useEffect(() => {
     let active = true;
-    getPreviousCash(publishDate).then((v) => {
-      if (active) setPreviousCash(v);
+    getPreviousRecord(publishDate).then(({ totalCash, remaining }) => {
+      if (!active) return;
+      setPreviousCash(totalCash);
+      setLoad((l) => {
+        const next = { ...l };
+        for (const [op, prefix] of Object.entries(LOAD_PREFIXES)) {
+          const v = remaining[prefix] ?? 0;
+          next[op] = { ...(l[op] ?? EMPTY_LOAD_ROW), current: v ? String(v) : "" };
+        }
+        return next;
+      });
     });
     return () => {
       active = false;
@@ -119,9 +129,10 @@ export default function AddShopRecordSection() {
     for (const [title, col] of Object.entries(PAYABLE_COLUMNS)) row[col] = num(cashPayable[title]);
     for (const [op, prefix] of Object.entries(LOAD_PREFIXES)) {
       const r = load[op];
-      row[`${prefix}_current`] = num(r?.current);
       row[`${prefix}_purchased`] = num(r?.purchased);
       row[`${prefix}_sold`] = num(r?.sold);
+      // Remaining = Current + Purchased - Sold (the Remain column)
+      row[`${prefix}_remaining`] = num(r?.current) + num(r?.purchased) - num(r?.sold);
     }
     // Total Cash = Today Cash (Sale panel, i.e. remaining cash) + Profit
     row.total_cash = sum(todayCash) - sum(cashPayable) + num(profit);

@@ -41,24 +41,39 @@ export async function getShopHistory(): Promise<{ records: ShopHistoryRecord[]; 
   };
 }
 
-/** Total Cash of the latest shop_history record published before `beforeDate` (YYYY-MM-DD). */
-export async function getPreviousCash(beforeDate: string): Promise<number> {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(beforeDate)) return 0;
+const LOAD_PREFIXES = ["hafiz", "telenor", "jazz", "ufone", "zong1", "zong2", "jazzcash"];
+
+export type PreviousRecord = {
+  totalCash: number;
+  /** Remaining load per operator prefix, e.g. { hafiz: 1200 }. */
+  remaining: Record<string, number>;
+};
+
+/** Total Cash and remaining load of the latest shop_history record published before `beforeDate` (YYYY-MM-DD). */
+export async function getPreviousRecord(beforeDate: string): Promise<PreviousRecord> {
+  const empty: PreviousRecord = { totalCash: 0, remaining: {} };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(beforeDate)) return empty;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return 0;
+  if (!user) return empty;
 
   const { data } = await supabase
     .from("shop_history")
-    .select("total_cash")
+    .select(["total_cash", ...LOAD_PREFIXES.map((p) => `${p}_remaining`)].join(", "))
     .lt("publish_date", beforeDate)
     .order("publish_date", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  return Number(data?.total_cash) || 0;
+  if (!data) return empty;
+
+  const row = data as unknown as Record<string, unknown>;
+  return {
+    totalCash: Number(row.total_cash) || 0,
+    remaining: Object.fromEntries(LOAD_PREFIXES.map((p) => [p, Number(row[`${p}_remaining`]) || 0])),
+  };
 }
 
 export async function saveShopRecord(
