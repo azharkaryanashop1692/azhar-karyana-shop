@@ -80,12 +80,12 @@ export default function ShopHistorySection() {
                   {formatRs(r.totalSale)}
                 </span>
               </div>
-              {r.note && (
-                <div className="rounded-xl border border-white/5 bg-[#1a1a1a] p-3">
-                  <p className="text-sm font-bold text-white">Note</p>
-                  <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted">{r.note}</p>
-                </div>
-              )}
+              <div className="rounded-xl border border-white/5 bg-[#1a1a1a] p-3">
+                <p className="text-sm font-bold text-white">Note</p>
+                <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted">
+                  {r.note || "Empty"}
+                </p>
+              </div>
             </Card>
           ))}
         </div>
