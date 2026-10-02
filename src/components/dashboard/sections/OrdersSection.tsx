@@ -61,7 +61,7 @@ export default function OrdersSection({
   return (
     <div className="space-y-6">
       <ActionBar>
-        <SearchInput value={query} onChange={setQuery} />
+        <SearchInput value={query} onChange={setQuery} placeholder="Search by order name..." />
         <PrimaryButton onClick={() => setEditing("new")}>Create New Order</PrimaryButton>
       </ActionBar>
 
