@@ -1,26 +1,16 @@
-import { LogOut, Menu } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { logout } from "@/app/login/actions";
 
 export default function Header({
   title,
   userEmail,
-  onMenuClick,
 }: {
   title: string;
   userEmail: string;
-  onMenuClick: () => void;
 }) {
   return (
     <header className="sticky top-0 z-20 px-4 pt-3 sm:px-6">
       <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[#1c1c1c]/85 px-4 py-3 shadow-lg shadow-black/30 backdrop-blur-md">
-        <button
-          type="button"
-          onClick={onMenuClick}
-          aria-label="Open menu"
-          className="grid size-9 shrink-0 place-items-center rounded-lg text-muted hover:bg-white/10 lg:hidden"
-        >
-          <Menu className="size-5" />
-        </button>
         <div className="min-w-0">
           <h1 className="truncate text-lg font-semibold text-white sm:text-xl">
             Welcome back, Azhar Karyana Store

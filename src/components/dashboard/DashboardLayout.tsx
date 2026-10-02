@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
+import BottomNav from "./BottomNav";
 import { NAV_ITEMS, type TabId } from "./navigation";
 import { getShopHistory, type ShopHistoryRecord } from "@/app/dashboard/actions";
 import type { Order } from "@/app/dashboard/orderActions";
@@ -38,14 +39,12 @@ export default function DashboardLayout({
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   // Shop History records, preloaded on the server so the screen opens with data.
   const [history, setHistory] = useState(initialHistory);
-  const [menuOpen, setMenuOpen] = useState(false);
   // shop_history record being edited on the Add Shop Record screen; null = new record.
   const [editRecordId, setEditRecordId] = useState<number | null>(null);
 
   const navigate = (id: TabId) => {
     setEditRecordId(null);
     setActiveTab(id);
-    setMenuOpen(false);
     window.scrollTo({ top: 0 });
   };
 
@@ -89,18 +88,15 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar
-        active={activeTab}
-        onSelect={navigate}
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-      />
+      <Sidebar active={activeTab} onSelect={navigate} />
       <div className="lg:pl-[250px]">
-        <Header title={activeLabel} userEmail={userEmail} onMenuClick={() => setMenuOpen(true)} />
-        <main key={activeTab} className="px-4 py-6 sm:px-6">
+        <Header title={activeLabel} userEmail={userEmail} />
+        {/* Bottom padding keeps content clear of the phone tab bar. */}
+        <main key={activeTab} className="px-4 pt-6 pb-28 sm:px-6 lg:pb-6">
           {views[activeTab]}
         </main>
       </div>
+      <BottomNav active={activeTab} onSelect={navigate} />
     </div>
   );
 }
