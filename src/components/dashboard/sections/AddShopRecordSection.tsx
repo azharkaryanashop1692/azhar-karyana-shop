@@ -66,11 +66,13 @@ function NumInput({
   onChange,
   placeholder = "0",
   className,
+  disabled,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }) {
   return (
     <input
@@ -79,9 +81,10 @@ function NumInput({
       min={0}
       value={value}
       placeholder={placeholder}
+      disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
       className={cn(
-        "w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-accent/60 focus:outline-none",
+        "w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-accent/60 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60",
         className,
       )}
     />
@@ -373,7 +376,11 @@ export default function AddShopRecordSection({ editId = null }: { editId?: numbe
                     <td className="py-1.5 pr-2 font-mono text-xs text-muted">{phone}</td>
                     {(["current", "purchased"] as const).map((k) => (
                       <td key={k} className="py-1.5 pl-2">
-                        <NumInput value={row?.[k] ?? ""} onChange={(v) => updateLoad(operator, k, v)} />
+                        <NumInput
+                          value={row?.[k] ?? ""}
+                          onChange={(v) => updateLoad(operator, k, v)}
+                          disabled={k === "current"}
+                        />
                       </td>
                     ))}
                     <td className="py-1.5 pl-2 font-semibold text-white">{total.toLocaleString("en-US")}</td>
