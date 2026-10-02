@@ -96,6 +96,7 @@ export default function AddShopRecordSection() {
   const [load, setLoad] = useState<Record<string, LoadRow>>({});
 
   const [profit, setProfit] = useState("");
+  const [note, setNote] = useState("");
   const [publishDate, setPublishDate] = useState(todayIso);
   const [previousCash, setPreviousCash] = useState(0);
 
@@ -331,14 +332,24 @@ export default function AddShopRecordSection() {
             </tbody>
           </table>
         </div>
-        <div className="mt-4 flex justify-start">
-          <div className="w-full rounded-xl border border-white/5 bg-[#1a1a1a] p-4 sm:w-72">
+        <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+          <div className="w-full shrink-0 rounded-xl border border-white/5 bg-[#1a1a1a] p-4 sm:w-72">
             <p className="text-xs font-medium uppercase tracking-wide text-muted">Additional Load</p>
             <p className="mt-1 text-2xl font-bold text-accent">{formatRs(totals.additionalLoad)}</p>
             <p className="mt-1 text-xs text-muted">
               Remaining load (excl. Jazzcash) above {ADDITIONAL_LOAD_THRESHOLD.toLocaleString("en-US")}
             </p>
           </div>
+          <label className="flex min-w-0 flex-1 flex-col rounded-xl border border-white/5 bg-[#1a1a1a] p-4">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted">Note</span>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              placeholder="Write a note for this record..."
+              className="mt-2 w-full flex-1 resize-y rounded-lg border border-white/10 bg-[#141414] px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-accent/60 focus:outline-none"
+            />
+          </label>
         </div>
       </Card>
 
