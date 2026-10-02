@@ -8,6 +8,7 @@ export type ExpenseInput = { name: string; price: number; status: "Load" | "Othe
 export async function saveShopRecord(
   row: ShopHistoryRow,
   expenses: ExpenseInput[] = [],
+  publishDate?: string,
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
@@ -15,10 +16,14 @@ export async function saveShopRecord(
   } = await supabase.auth.getUser();
   if (!user) return { error: "You must be logged in to save a record." };
 
-  const values: ShopHistoryRow = {};
+  const values: Record<string, number | string> = {};
   for (const [key, v] of Object.entries(row)) {
     if (!/^[a-z0-9_]+$/.test(key)) return { error: "Invalid field." };
     values[key] = Number(v) || 0;
+  }
+  if (publishDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(publishDate)) return { error: "Invalid publish date." };
+    values.publish_date = publishDate;
   }
 
   const { data: record, error } = await supabase

@@ -53,6 +53,12 @@ const ADDITIONAL_LOAD_THRESHOLD = 40000;
 const EMPTY_LOAD_ROW: LoadRow = { current: "", purchased: "", sold: "" };
 
 const num = (v: string | undefined) => Number(v) || 0;
+
+/** Today's local date as "YYYY-MM-DD" (the date input's value format). */
+function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 const sum = (m: NumMap) => Object.values(m).reduce((a, v) => a + num(v), 0);
 
 function NumInput({
@@ -90,6 +96,7 @@ export default function AddShopRecordSection() {
   const [load, setLoad] = useState<Record<string, LoadRow>>({});
 
   const [profit, setProfit] = useState("");
+  const [publishDate, setPublishDate] = useState(todayIso);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -107,7 +114,7 @@ export default function AddShopRecordSection() {
     row.total_cash = sum(todayCash) - sum(cashPayable) + num(profit);
     setSaving(true);
     setSaveMsg(null);
-    const { error } = await saveShopRecord(row, expenses);
+    const { error } = await saveShopRecord(row, expenses, publishDate);
     setSaving(false);
     setSaveMsg(error ? { ok: false, text: error } : { ok: true, text: "Record saved." });
   };
@@ -359,6 +366,14 @@ export default function AddShopRecordSection() {
           {saveMsg && (
             <p className={cn("text-sm", saveMsg.ok ? "text-accent" : "text-danger")}>{saveMsg.text}</p>
           )}
+          <input
+            type="date"
+            value={publishDate}
+            onChange={(e) => setPublishDate(e.target.value)}
+            aria-label="Publish date"
+            suppressHydrationWarning
+            className="rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-2.5 text-sm text-white [color-scheme:dark] focus:border-accent/60 focus:outline-none"
+          />
           <button
             type="button"
             onClick={saveRecord}
