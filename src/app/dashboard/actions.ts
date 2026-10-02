@@ -29,6 +29,7 @@ export async function saveShopRecord(
   row: ShopHistoryRow,
   expenses: ExpenseInput[] = [],
   publishDate?: string,
+  note?: string,
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
@@ -45,6 +46,8 @@ export async function saveShopRecord(
     if (!/^\d{4}-\d{2}-\d{2}$/.test(publishDate)) return { error: "Invalid publish date." };
     values.publish_date = publishDate;
   }
+  const trimmedNote = String(note ?? "").trim();
+  if (trimmedNote) values.note = trimmedNote;
 
   const { data: record, error } = await supabase
     .from("shop_history")

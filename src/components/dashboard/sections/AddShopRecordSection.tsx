@@ -127,7 +127,7 @@ export default function AddShopRecordSection() {
     row.total_cash = sum(todayCash) - sum(cashPayable) + num(profit);
     setSaving(true);
     setSaveMsg(null);
-    const { error } = await saveShopRecord(row, expenses, publishDate);
+    const { error } = await saveShopRecord(row, expenses, publishDate, note);
     setSaving(false);
     setSaveMsg(error ? { ok: false, text: error } : { ok: true, text: "Record saved." });
   };
