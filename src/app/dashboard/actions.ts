@@ -5,6 +5,42 @@ import { createClient } from "@/lib/supabase/server";
 export type ShopHistoryRow = Record<string, number>;
 export type ExpenseInput = { name: string; price: number; status: "Load" | "Other" };
 
+export type ShopHistoryRecord = {
+  id: number;
+  publishDate: string; // YYYY-MM-DD
+  creator: string;
+  totalCash: number;
+  totalSale: number;
+  note: string;
+};
+
+/** All shop_history records, newest publish date first. */
+export async function getShopHistory(): Promise<{ records: ShopHistoryRecord[]; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { records: [], error: "You must be logged in to view history." };
+
+  const { data, error } = await supabase
+    .from("shop_history")
+    .select("id, publish_date, creator_email, total_cash, total_sale, note")
+    .order("publish_date", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) return { records: [], error: error.message };
+
+  return {
+    records: data.map((r) => ({
+      id: r.id,
+      publishDate: r.publish_date,
+      creator: r.creator_email ?? "Unknown",
+      totalCash: Number(r.total_cash) || 0,
+      totalSale: Number(r.total_sale) || 0,
+      note: r.note ?? "",
+    })),
+  };
+}
+
 /** Total Cash of the latest shop_history record published before `beforeDate` (YYYY-MM-DD). */
 export async function getPreviousCash(beforeDate: string): Promise<number> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(beforeDate)) return 0;
@@ -48,6 +84,7 @@ export async function saveShopRecord(
   }
   const trimmedNote = String(note ?? "").trim();
   if (trimmedNote) values.note = trimmedNote;
+  if (user.email) values.creator_email = user.email;
 
   const { data: record, error } = await supabase
     .from("shop_history")

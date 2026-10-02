@@ -125,6 +125,9 @@ export default function AddShopRecordSection() {
     }
     // Total Cash = Today Cash (Sale panel, i.e. remaining cash) + Profit
     row.total_cash = sum(todayCash) - sum(cashPayable) + num(profit);
+    // Total Sale = Today Cash + Profit - Remaining Previous Cash (Previous Cash - Other expenses)
+    const otherExp = expenses.filter((e) => e.status === "Other").reduce((a, e) => a + e.price, 0);
+    row.total_sale = row.total_cash - (previousCash - otherExp);
     setSaving(true);
     setSaveMsg(null);
     const { error } = await saveShopRecord(row, expenses, publishDate, note);
