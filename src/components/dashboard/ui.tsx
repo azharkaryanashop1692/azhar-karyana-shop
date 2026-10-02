@@ -17,7 +17,8 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-white/5 bg-gradient-to-br from-[#2b2b2b] to-[#1f1f1f] p-5 shadow-lg shadow-black/30",
+        // min-w-0 lets cards shrink inside grid/flex layouts instead of overflowing on phones.
+        "min-w-0 rounded-2xl border border-white/5 bg-gradient-to-br from-[#2b2b2b] to-[#1f1f1f] p-5 shadow-lg shadow-black/30",
         className,
       )}
     >

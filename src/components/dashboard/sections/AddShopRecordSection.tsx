@@ -91,6 +91,15 @@ function NumInput({
   );
 }
 
+/** Column label for phones, where the table header row is hidden and rows stack. */
+function MobileLabel({ children }: { children: React.ReactNode }) {
+  return <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted md:hidden">{children}</span>;
+}
+
+// Below md, table rows become stacked grids (header hidden, labels per cell).
+const STACK_TABLE = "w-full text-sm max-md:block";
+const STACK_ROW = "max-md:grid max-md:gap-2 max-md:border-b max-md:border-white/5 max-md:py-3";
+
 export default function AddShopRecordSection({ editId = null }: { editId?: number | null }) {
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -255,30 +264,34 @@ export default function AddShopRecordSection({ editId = null }: { editId?: numbe
         <Card className="xl:col-span-3">
           <CardHeader title="Cash Record" subtitle="Today cash and payable amount across all accounts" />
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px] text-sm">
-              <thead>
+            <table className={cn(STACK_TABLE, "md:min-w-[480px]")}>
+              <thead className="max-md:hidden">
                 <tr className="text-left text-xs uppercase tracking-wide text-muted">
                   <th className="pb-2 font-medium">Account</th>
                   <th className="pb-2 pl-2 font-medium">Today Cash</th>
                   <th className="pb-2 pl-2 font-medium">Payable Amount</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="max-md:block">
                 {cashAccounts.map((acc, i) => {
                   const payTitle = CASH_PAYABLE_TITLES[i];
                   return (
-                    <tr key={acc}>
-                      <td className="py-1.5 pr-2 font-medium text-white">{acc}</td>
-                      <td className="py-1.5 pl-2">
+                    <tr key={acc} className={cn(STACK_ROW, "max-md:grid-cols-2")}>
+                      <td className="py-1.5 pr-2 font-medium text-white max-md:col-span-2 max-md:p-0">{acc}</td>
+                      <td className="py-1.5 pl-2 max-md:p-0">
+                        <MobileLabel>Today Cash</MobileLabel>
                         <NumInput
                           value={todayCash[acc] ?? ""}
                           onChange={(v) => setTodayCash((m) => ({ ...m, [acc]: v }))}
                         />
                       </td>
-                      <td className="py-1.5 pl-2">
+                      <td className="py-1.5 pl-2 max-md:p-0">
                         {payTitle && (
-                          <label className="flex items-center gap-2">
-                            <span className="w-16 shrink-0 text-sm font-medium text-white">{payTitle}</span>
+                          <label className="block md:flex md:items-center md:gap-2">
+                            <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted md:mb-0 md:w-16 md:shrink-0 md:text-sm md:normal-case md:tracking-normal md:font-medium md:text-white">
+                              <span className="md:hidden">Payable · </span>
+                              {payTitle}
+                            </span>
                             <NumInput
                               value={cashPayable[payTitle] ?? ""}
                               onChange={(v) => setCashPayable((m) => ({ ...m, [payTitle]: v }))}
@@ -289,17 +302,23 @@ export default function AddShopRecordSection({ editId = null }: { editId?: numbe
                     </tr>
                   );
                 })}
-                <tr className="border-t border-white/10">
-                  <td className="pt-3 font-semibold text-muted">Total</td>
-                  <td className="pl-2 pt-3 font-semibold text-accent">{formatRs(totals.todayTotal)}</td>
-                  <td className="pl-2 pt-3 font-semibold text-danger">{formatRs(totals.cashPayableTotal)}</td>
+                <tr className="border-t border-white/10 max-md:grid max-md:grid-cols-2 max-md:gap-2 max-md:pt-3">
+                  <td className="pt-3 font-semibold text-muted max-md:col-span-2 max-md:p-0">Total</td>
+                  <td className="pl-2 pt-3 font-semibold text-accent max-md:p-0">
+                    <MobileLabel>Today Cash</MobileLabel>
+                    {formatRs(totals.todayTotal)}
+                  </td>
+                  <td className="pl-2 pt-3 font-semibold text-danger max-md:p-0">
+                    <MobileLabel>Payable</MobileLabel>
+                    {formatRs(totals.cashPayableTotal)}
+                  </td>
                 </tr>
-                <tr>
-                  <td className="pt-3 font-semibold text-muted">Remaining Cash</td>
+                <tr className="max-md:flex max-md:items-center max-md:justify-between max-md:pt-3">
+                  <td className="pt-3 font-semibold text-muted max-md:p-0">Remaining Cash</td>
                   <td
                     colSpan={2}
                     className={cn(
-                      "pl-2 pt-3 font-semibold",
+                      "pl-2 pt-3 font-semibold max-md:p-0",
                       totals.remainingCash < 0 ? "text-danger" : "text-accent",
                     )}
                   >
@@ -353,8 +372,8 @@ export default function AddShopRecordSection({ editId = null }: { editId?: numbe
       <Card>
         <CardHeader title="Load Record" subtitle="Mobile load balance per SIM / operator" />
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
+          <table className={cn(STACK_TABLE, "md:min-w-[760px]")}>
+            <thead className="max-md:hidden">
               <tr className="text-left text-xs uppercase tracking-wide text-muted">
                 <th className="pb-2 font-medium">Operator</th>
                 <th className="pb-2 font-medium">Number</th>
@@ -365,17 +384,20 @@ export default function AddShopRecordSection({ editId = null }: { editId?: numbe
                 <th className="pb-2 pl-2 font-medium">Remain</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="max-md:block">
               {loadOperators.map(({ operator, phone }) => {
                 const row = load[operator];
                 const total = num(row?.current) + num(row?.purchased);
                 const remain = total - num(row?.sold);
                 return (
-                  <tr key={operator}>
-                    <td className="py-1.5 pr-2 font-medium text-white">{operator}</td>
-                    <td className="py-1.5 pr-2 font-mono text-xs text-muted">{phone}</td>
+                  <tr key={operator} className={cn(STACK_ROW, "max-md:grid-cols-3")}>
+                    <td className="py-1.5 pr-2 font-medium text-white max-md:col-span-2 max-md:p-0">{operator}</td>
+                    <td className="py-1.5 pr-2 font-mono text-xs text-muted max-md:self-center max-md:p-0 max-md:text-right">
+                      {phone}
+                    </td>
                     {(["current", "purchased"] as const).map((k) => (
-                      <td key={k} className="py-1.5 pl-2">
+                      <td key={k} className="py-1.5 pl-2 max-md:p-0">
+                        <MobileLabel>{k === "current" ? "Current" : "Purchased"}</MobileLabel>
                         <NumInput
                           value={row?.[k] ?? ""}
                           onChange={(v) => updateLoad(operator, k, v)}
@@ -383,16 +405,21 @@ export default function AddShopRecordSection({ editId = null }: { editId?: numbe
                         />
                       </td>
                     ))}
-                    <td className="py-1.5 pl-2 font-semibold text-white">{total.toLocaleString("en-US")}</td>
-                    <td className="py-1.5 pl-2">
+                    <td className="py-1.5 pl-2 font-semibold text-white max-md:p-0">
+                      <MobileLabel>Total</MobileLabel>
+                      {total.toLocaleString("en-US")}
+                    </td>
+                    <td className="py-1.5 pl-2 max-md:p-0">
+                      <MobileLabel>Sold</MobileLabel>
                       <NumInput value={row?.sold ?? ""} onChange={(v) => updateLoad(operator, "sold", v)} />
                     </td>
                     <td
                       className={cn(
-                        "py-1.5 pl-2 font-semibold",
+                        "py-1.5 pl-2 font-semibold max-md:p-0",
                         remain < 0 ? "text-danger" : "text-accent",
                       )}
                     >
+                      <MobileLabel>Remain</MobileLabel>
                       {remain.toLocaleString("en-US")}
                     </td>
                   </tr>
@@ -529,7 +556,7 @@ function AddExpenseModal({
     "w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-accent/60 focus:outline-none";
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"

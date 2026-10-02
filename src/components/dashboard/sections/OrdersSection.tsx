@@ -15,8 +15,9 @@ import {
   matches,
 } from "../ui";
 
-const inputClass =
-  "w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-accent/60 focus:outline-none";
+const inputBase =
+  "rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-accent/60 focus:outline-none";
+const inputClass = cn(inputBase, "w-full");
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-US", {
@@ -156,14 +157,14 @@ function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/70 p-4"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4"
       onClick={() => !busy && onClose()}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={cn("w-full", wide ? "max-w-lg" : "max-w-md")}
+        className={cn("my-auto w-full", wide ? "max-w-lg" : "max-w-md")}
         onClick={(e) => e.stopPropagation()}
       >
         <Card>
@@ -280,7 +281,7 @@ function OrderFormModal({
 
         <div className="space-y-1.5">
           <span className="text-sm font-medium text-muted">Add Item</span>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-[1fr_auto] gap-2 sm:grid-cols-[1fr_8rem_auto]">
             <input
               type="text"
               value={itemName}
@@ -292,7 +293,7 @@ function OrderFormModal({
                 }
               }}
               placeholder="Item name"
-              className={cn(inputClass, "min-w-0 flex-1")}
+              className={cn(inputBase, "col-span-2 min-w-0 sm:col-span-1")}
             />
             <input
               type="number"
@@ -307,14 +308,14 @@ function OrderFormModal({
                 }
               }}
               placeholder="Price"
-              className={cn(inputClass, "w-28 shrink-0")}
+              className={cn(inputBase, "min-w-0")}
             />
             <button
               type="button"
               onClick={addItem}
               disabled={!canAddItem}
               aria-label="Add item"
-              className="grid size-[38px] shrink-0 place-items-center rounded-lg bg-accent text-black transition hover:bg-[#00e676] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-zinc-500"
+              className="grid h-full min-h-[38px] w-[38px] place-items-center rounded-lg bg-accent text-black transition hover:bg-[#00e676] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-zinc-500"
             >
               <Plus className="size-4" />
             </button>
