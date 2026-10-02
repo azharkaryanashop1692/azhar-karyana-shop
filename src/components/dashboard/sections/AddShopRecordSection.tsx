@@ -343,7 +343,12 @@ export default function AddShopRecordSection() {
             value={formatRs(totals.remainingPrev)}
             tone={totals.remainingPrev < 0 ? "danger" : undefined}
           />
-          <div className="rounded-xl bg-accent p-4 text-black">
+          <div
+            className={cn(
+              "rounded-xl p-4",
+              totals.totalSale < 0 ? "bg-danger text-white" : "bg-accent text-black",
+            )}
+          >
             <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Total Sale</p>
             <p className="mt-1 text-2xl font-bold">{formatRs(totals.totalSale)}</p>
           </div>
