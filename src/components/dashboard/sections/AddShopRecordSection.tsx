@@ -121,16 +121,16 @@ export default function AddShopRecordSection() {
     const cashPayableTotal = sum(cashPayable);
     const remainingCash = todayTotal - cashPayableTotal;
     const exp = expenses.reduce((a, e) => a + e.price, 0);
-    const totalSale = todayTotal + exp;
     const loadExp = expenses.filter((e) => e.status === "Load").reduce((a, e) => a + e.price, 0);
     const otherExp = exp - loadExp;
     const remainingPrev = previousCash - otherExp;
+    const totalSale = remainingCash + num(profit) - remainingPrev;
     const remainingLoad = Object.entries(load)
       .filter(([op]) => op !== "Jazzcash")
       .reduce((a, [, r]) => a + num(r.current) + num(r.purchased) - num(r.sold), 0);
     const additionalLoad = Math.max(0, remainingLoad - ADDITIONAL_LOAD_THRESHOLD);
     return { exp, loadExp, otherExp, additionalLoad, todayTotal, cashPayableTotal, remainingCash, totalSale, remainingPrev };
-  }, [todayCash, cashPayable, load, expenses]);
+  }, [todayCash, cashPayable, load, expenses, profit]);
 
   return (
     <div className="space-y-6">
