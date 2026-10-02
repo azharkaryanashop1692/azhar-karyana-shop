@@ -20,6 +20,9 @@ const inputBase =
   "rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-accent/60 focus:outline-none";
 const inputClass = cn(inputBase, "w-full");
 
+/** How many of an order's latest items are listed on its card. */
+const CARD_ITEMS = 3;
+
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-US", {
     month: "2-digit",
@@ -91,9 +94,26 @@ export default function OrdersSection({
                   <EditDeleteActions onEdit={() => setEditing(o)} onDelete={() => setDeleting(o)} />
                 </div>
               </div>
-              <p className="text-sm text-muted">
-                {o.items.length} {o.items.length === 1 ? "item" : "items"}
-              </p>
+              {/* Latest 3 items (items are stored oldest first); the rest are in the view popup. */}
+              <div className="rounded-xl border border-white/5 bg-[#1a1a1a]">
+                <ul className="divide-y divide-white/5">
+                  {o.items.slice(-CARD_ITEMS).map((item, i) => (
+                    <li key={i} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                      <span className="min-w-0 truncate text-white">{item.name}</span>
+                      <span className="shrink-0 font-semibold text-white">{formatRs(item.price)}</span>
+                    </li>
+                  ))}
+                </ul>
+                {o.items.length > CARD_ITEMS && (
+                  <button
+                    type="button"
+                    onClick={() => setViewing(o)}
+                    className="w-full border-t border-white/5 px-3 py-2 text-left text-xs font-medium text-accent hover:underline"
+                  >
+                    +{o.items.length - CARD_ITEMS} more {o.items.length - CARD_ITEMS === 1 ? "item" : "items"}
+                  </button>
+                )}
+              </div>
               <p className="text-3xl font-bold text-white">{formatRs(o.price)}</p>
               <p className="mt-auto truncate border-t border-white/5 pt-3 text-sm text-muted">
                 Created by: <span className="font-medium text-white">{o.creator}</span>
