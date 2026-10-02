@@ -2,17 +2,38 @@
 
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { shopNeedsText } from "../mockData";
-import { Card, CardHeader } from "../ui";
+import { getShopNeeds, saveShopNeeds } from "@/app/dashboard/actions";
+import { Card, CardHeader, cn } from "../ui";
 
-export default function ShopNeedsSection() {
-  const [text, setText] = useState(shopNeedsText);
+export default function ShopNeedsSection({
+  text,
+  setText,
+}: {
+  /** Kept in the dashboard layout (preloaded on the server) so it survives tab switches. */
+  text: string;
+  setText: (text: string) => void;
+}) {
   const [spinning, setSpinning] = useState(false);
+  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const refresh = () => {
+  // Reload the saved text from the current user's shop_needs.
+  const refresh = async () => {
     setSpinning(true);
-    setText(shopNeedsText);
-    setTimeout(() => setSpinning(false), 600);
+    const { text, error } = await getShopNeeds();
+    setSpinning(false);
+    if (error) setStatus({ ok: false, text: error });
+    else {
+      setText(text);
+      setStatus(null);
+    }
+  };
+
+  // Enter still adds a new line; afterwards the whole text is saved.
+  const onKeyUp = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== "Enter") return;
+    setStatus({ ok: true, text: "Saving..." });
+    const { error } = await saveShopNeeds(e.currentTarget.value);
+    setStatus(error ? { ok: false, text: error } : { ok: true, text: "Saved" });
   };
 
   return (
@@ -29,11 +50,18 @@ export default function ShopNeedsSection() {
       </CardHeader>
       <textarea
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          if (status?.text === "Saved") setStatus(null);
+        }}
+        onKeyUp={onKeyUp}
         placeholder="Type here..."
         className="min-h-[400px] w-full flex-1 resize-none rounded-xl border border-white/10 bg-[#1a1a1a] p-4 text-sm leading-relaxed text-zinc-200 placeholder:text-muted focus:border-accent/60 focus:outline-none"
       />
-      <p className="mt-3 text-right text-xs text-muted">{text.length} characters</p>
+      <div className="mt-3 flex items-center justify-between gap-3 text-xs">
+        <span className={cn(status && !status.ok ? "text-danger" : "text-accent")}>{status?.text}</span>
+        <span className="text-muted">{text.length} characters</span>
+      </div>
     </Card>
   );
 }

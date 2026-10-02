@@ -16,10 +16,13 @@ import ProductsPriceSection from "./sections/ProductsPriceSection";
 export default function DashboardLayout({
   userEmail,
   initialHistory,
+  initialShopNeeds,
 }: {
   userEmail: string;
   initialHistory: ShopHistoryRecord[] | null;
+  initialShopNeeds: string;
 }) {
+  const [shopNeeds, setShopNeeds] = useState(initialShopNeeds);
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   // Shop History records, preloaded on the server so the screen opens with data.
   const [history, setHistory] = useState(initialHistory);
@@ -43,7 +46,7 @@ export default function DashboardLayout({
     dashboard: <DashboardSection onNavigate={navigate} />,
     "add-record": <AddShopRecordSection key={editRecordId ?? "new"} editId={editRecordId} />,
     history: <ShopHistorySection onEdit={editRecord} records={history} setRecords={setHistory} />,
-    needs: <ShopNeedsSection />,
+    needs: <ShopNeedsSection text={shopNeeds} setText={setShopNeeds} />,
     orders: <OrdersSection />,
     people: <PeoplesRecordSection />,
     products: <ProductsPriceSection />,

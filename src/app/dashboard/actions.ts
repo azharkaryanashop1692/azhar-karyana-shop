@@ -5,6 +5,34 @@ import { createClient } from "@/lib/supabase/server";
 export type ShopHistoryRow = Record<string, number>;
 export type ExpenseInput = { name: string; price: number; status: "Load" | "Other" };
 
+/** The current user's saved Shop Needs text ("" if none). */
+export async function getShopNeeds(): Promise<{ text: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { text: "", error: "You must be logged in." };
+
+  const { data, error } = await supabase.from("users").select("shop_needs").eq("id", user.id).maybeSingle();
+  if (error) return { text: "", error: error.message };
+  return { text: data?.shop_needs ?? "" };
+}
+
+/** Saves `text` into the current user's users.shop_needs. */
+export async function saveShopNeeds(text: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be logged in." };
+
+  const { error } = await supabase
+    .from("users")
+    .upsert({ id: user.id, email: user.email, shop_needs: String(text) });
+  if (error) return { error: error.message };
+  return {};
+}
+
 export type ShopHistoryRecord = {
   id: number;
   publishDate: string; // YYYY-MM-DD

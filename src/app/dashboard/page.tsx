@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { createClient } from "@/lib/supabase/server";
-import { getShopHistory } from "./actions";
+import { getShopHistory, getShopNeeds } from "./actions";
 
 export default async function DashboardPage() {
   // The proxy already redirects signed-out users; verify again here so the
@@ -14,7 +14,16 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   // Preload Shop History so that screen shows data immediately.
-  const { records, error } = await getShopHistory();
+  const [{ records, error }, { text: shopNeeds }] = await Promise.all([
+    getShopHistory(),
+    getShopNeeds(),
+  ]);
 
-  return <DashboardLayout userEmail={user.email ?? ""} initialHistory={error ? null : records} />;
+  return (
+    <DashboardLayout
+      userEmail={user.email ?? ""}
+      initialHistory={error ? null : records}
+      initialShopNeeds={shopNeeds}
+    />
+  );
 }
