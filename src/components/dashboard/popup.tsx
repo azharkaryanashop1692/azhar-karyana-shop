@@ -184,14 +184,27 @@ export function ItemAdder({ onAdd }: { onAdd: (item: OrderItem) => void }) {
 /** How many of the latest items are listed on a card. */
 const CARD_ITEMS = 3;
 
-/** Card preview of the latest 3 items (items are stored oldest first); "+N more" opens the full view. */
-export function CardItemsPreview({ items, onMore }: { items: OrderItem[]; onMore: () => void }) {
-  if (items.length === 0) return null;
+/**
+ * Card preview of the latest 3 items (items are stored oldest first); "+N more" opens the full view.
+ * With `totalLabel`, it also shows the popup's total row (total of all items) and an empty state.
+ */
+export function CardItemsPreview({
+  items,
+  onMore,
+  totalLabel,
+}: {
+  items: OrderItem[];
+  onMore: () => void;
+  totalLabel?: string;
+}) {
+  if (items.length === 0 && !totalLabel) return null;
+  const total = items.reduce((a, i) => a + i.price, 0);
   const extra = items.length - CARD_ITEMS;
   const first = Math.max(0, extra); // index of the first shown item, for numbering
   // Same row design as the popup's ItemsList.
   return (
     <div className="overflow-hidden rounded-xl border border-white/10 bg-[#1a1a1a]">
+      {items.length === 0 && <p className="px-4 py-6 text-center text-sm text-muted">No items added yet.</p>}
       <ul className="divide-y divide-white/5">
         {items.slice(-CARD_ITEMS).map((item, i) => (
           <li key={i} className="flex items-center gap-3 px-4 py-2.5">
@@ -211,6 +224,12 @@ export function CardItemsPreview({ items, onMore }: { items: OrderItem[]; onMore
         >
           +{extra} more {extra === 1 ? "item" : "items"}
         </button>
+      )}
+      {totalLabel && (
+        <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.03] px-4 py-3">
+          <span className="text-sm font-semibold text-muted">{totalLabel}</span>
+          <span className="text-lg font-bold text-accent">{formatRs(total)}</span>
+        </div>
       )}
     </div>
   );

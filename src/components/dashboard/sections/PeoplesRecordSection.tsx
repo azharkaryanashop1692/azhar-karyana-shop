@@ -109,11 +109,7 @@ export default function PeoplesRecordSection({
 
               <ContactLines person={p} />
 
-              <CardItemsPreview items={p.items} onMore={() => setViewing(p)} />
-
-              <div>
-                <Badge tone="green">Total {formatRs(p.totalPrice)}</Badge>
-              </div>
+              <CardItemsPreview items={p.items} onMore={() => setViewing(p)} totalLabel="Total Price" />
 
               <NoteBox note={p.note} />
 
