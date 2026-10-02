@@ -56,7 +56,14 @@ export default function DashboardLayout({
 
   const views: Record<TabId, ReactNode> = {
     dashboard: <DashboardSection onNavigate={navigate} />,
-    "add-record": <AddShopRecordSection key={editRecordId ?? "new"} editId={editRecordId} />,
+    "add-record": (
+      <AddShopRecordSection
+        key={editRecordId ?? "new"}
+        editId={editRecordId}
+        editDetail={history?.find((r) => r.id === editRecordId)?.detail ?? null}
+        history={history}
+      />
+    ),
     history: <ShopHistorySection onEdit={editRecord} records={history} setRecords={setHistory} />,
     needs: <ShopNeedsSection text={shopNeeds} setText={setShopNeeds} />,
     orders: <OrdersSection orders={orders} setOrders={setOrders} />,

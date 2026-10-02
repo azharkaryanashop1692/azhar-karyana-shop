@@ -40,7 +40,29 @@ export type ShopHistoryRecord = {
   totalCash: number;
   totalSale: number;
   note: string;
+  /** Full record (all columns + expenses), so Edit can fill the form without another request. */
+  detail: ShopRecordDetail;
 };
+
+type ExpenseRow = { id: number; name: string; price: number | string; status: "Load" | "Other" };
+
+/** shop_history row (with embedded expenses) -> ShopRecordDetail. */
+function toDetail(row: Record<string, unknown>): ShopRecordDetail {
+  const values: Record<string, number> = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (typeof v === "number" || typeof v === "string") values[k] = Number(v) || 0;
+  }
+  const expenses = ((row.expenses as ExpenseRow[] | null) ?? [])
+    .slice()
+    .sort((a, b) => a.id - b.id)
+    .map((e) => ({ name: e.name, price: Number(e.price) || 0, status: e.status }));
+  return {
+    values,
+    publishDate: String(row.publish_date),
+    note: (row.note as string | null) ?? "",
+    expenses,
+  };
+}
 
 /** All shop_history records, newest publish date first. */
 export async function getShopHistory(): Promise<{ records: ShopHistoryRecord[]; error?: string }> {
@@ -52,7 +74,7 @@ export async function getShopHistory(): Promise<{ records: ShopHistoryRecord[]; 
 
   const { data, error } = await supabase
     .from("shop_history")
-    .select("id, publish_date, creator_email, total_cash, total_sale, note")
+    .select("*, expenses(id, name, price, status)")
     .order("publish_date", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) return { records: [], error: error.message };
@@ -65,6 +87,7 @@ export async function getShopHistory(): Promise<{ records: ShopHistoryRecord[]; 
       totalCash: Number(r.total_cash) || 0,
       totalSale: Number(r.total_sale) || 0,
       note: r.note ?? "",
+      detail: toDetail(r),
     })),
   };
 }
@@ -122,27 +145,14 @@ export async function getShopRecord(
   } = await supabase.auth.getUser();
   if (!user) return { error: "You must be logged in to edit a record." };
 
-  const { data, error } = await supabase.from("shop_history").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("shop_history")
+    .select("*, expenses(id, name, price, status)")
+    .eq("id", id)
+    .maybeSingle();
   if (error) return { error: error.message };
   if (!data) return { error: "Record not found." };
-
-  const { data: exp, error: expError } = await supabase
-    .from("expenses")
-    .select("name, price, status")
-    .eq("shop_history_id", id)
-    .order("id");
-  if (expError) return { error: expError.message };
-
-  const values: Record<string, number> = {};
-  for (const [k, v] of Object.entries(data)) if (typeof v === "number" || typeof v === "string") values[k] = Number(v) || 0;
-  return {
-    record: {
-      values,
-      publishDate: data.publish_date,
-      note: data.note ?? "",
-      expenses: exp.map((e) => ({ name: e.name, price: Number(e.price) || 0, status: e.status })),
-    },
-  };
+  return { record: toDetail(data) };
 }
 
 export async function deleteShopRecord(id: number): Promise<{ error?: string }> {

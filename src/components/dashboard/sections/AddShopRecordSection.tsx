@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Plus, Save, Wallet, X } from "lucide-react";
 import { cashAccounts, loadOperators } from "../mockData";
 import { Card, CardHeader, cn, formatRs, playBeep } from "../ui";
-import { getPreviousRecord, getShopRecord, saveShopRecord } from "@/app/dashboard/actions";
+import {
+  getPreviousRecord,
+  getShopRecord,
+  saveShopRecord,
+  type ShopHistoryRecord,
+  type ShopRecordDetail,
+} from "@/app/dashboard/actions";
 
 type NumMap = Record<string, string>;
 type LoadRow = { current: string; purchased: string; sold: string };
@@ -100,25 +106,103 @@ function MobileLabel({ children }: { children: React.ReactNode }) {
 const STACK_TABLE = "w-full text-sm max-md:block";
 const STACK_ROW = "max-md:grid max-md:gap-2 max-md:border-b max-md:border-white/5 max-md:py-3";
 
-export default function AddShopRecordSection({ editId = null }: { editId?: number | null }) {
-  const [expenseOpen, setExpenseOpen] = useState(false);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [todayCash, setTodayCash] = useState<NumMap>({});
-  const [cashPayable, setCashPayable] = useState<NumMap>({});
-  const [load, setLoad] = useState<Record<string, LoadRow>>({});
+type FormState = {
+  todayCash: NumMap;
+  cashPayable: NumMap;
+  load: Record<string, LoadRow>;
+  profit: string;
+  expenses: Expense[];
+  note: string;
+  publishDate: string;
+};
 
-  const [profit, setProfit] = useState("");
-  const [note, setNote] = useState("");
-  const [publishDate, setPublishDate] = useState(todayIso);
-  const [previousCash, setPreviousCash] = useState(0);
+/** Form values for editing a saved shop_history record. */
+function formFromDetail(detail: ShopRecordDetail): FormState {
+  const v = detail.values;
+  const str = (n: number | undefined) => (n ? String(n) : "");
+  // Profit isn't stored: Total Cash = (Today Cash total - Payable total) + Profit
+  const cashTotal = Object.values(CASH_COLUMNS).reduce((a, col) => a + (v[col] ?? 0), 0);
+  const payTotal = Object.values(PAYABLE_COLUMNS).reduce((a, col) => a + (v[col] ?? 0), 0);
+  return {
+    todayCash: Object.fromEntries(Object.entries(CASH_COLUMNS).map(([acc, col]) => [acc, str(v[col])])),
+    cashPayable: Object.fromEntries(Object.entries(PAYABLE_COLUMNS).map(([t, col]) => [t, str(v[col])])),
+    load: Object.fromEntries(
+      Object.entries(LOAD_PREFIXES).map(([op, p]) => {
+        const purchased = v[`${p}_purchased`] ?? 0;
+        const sold = v[`${p}_sold`] ?? 0;
+        // Current = Remaining - Purchased + Sold
+        const current = (v[`${p}_remaining`] ?? 0) - purchased + sold;
+        return [op, { current: str(current), purchased: str(purchased), sold: str(sold) }];
+      }),
+    ),
+    profit: str((v.total_cash ?? 0) - (cashTotal - payTotal)),
+    expenses: detail.expenses,
+    note: detail.note,
+    publishDate: detail.publishDate,
+  };
+}
+
+type PreviousValues = { totalCash: number; remaining: Record<string, number> };
+
+/** Latest cached record published before `date` (history is sorted newest first); null if no cache. */
+function previousFromHistory(history: ShopHistoryRecord[] | null, date: string): PreviousValues | null {
+  if (!history) return null;
+  const prev = history.find((r) => r.publishDate < date);
+  if (!prev) return { totalCash: 0, remaining: {} };
+  const remaining = Object.fromEntries(
+    Object.values(LOAD_PREFIXES).map((p) => [p, prev.detail.values[`${p}_remaining`] ?? 0]),
+  );
+  return { totalCash: prev.totalCash, remaining };
+}
+
+/** Load rows with each operator's Current set from the previous record's remaining load. */
+function withCurrent(load: Record<string, LoadRow>, remaining: Record<string, number>) {
+  const next = { ...load };
+  for (const [op, prefix] of Object.entries(LOAD_PREFIXES)) {
+    const v = remaining[prefix] ?? 0;
+    next[op] = { ...(load[op] ?? EMPTY_LOAD_ROW), current: v ? String(v) : "" };
+  }
+  return next;
+}
+
+export default function AddShopRecordSection({
+  editId = null,
+  editDetail = null,
+  history = null,
+}: {
+  editId?: number | null;
+  /** Cached record being edited (from Shop History): fills the form instantly. */
+  editDetail?: ShopRecordDetail | null;
+  /** Cached Shop History, used for Previous Cash / Current until the server answers. */
+  history?: ShopHistoryRecord[] | null;
+}) {
+  // Initial form: the edited record if cached, else empty with Current from the cached previous record.
+  const [initial] = useState(() => {
+    const form: FormState = editDetail
+      ? formFromDetail(editDetail)
+      : { todayCash: {}, cashPayable: {}, load: {}, profit: "", expenses: [], note: "", publishDate: todayIso() };
+    const previous = previousFromHistory(history, form.publishDate);
+    if (!editDetail && previous) form.load = withCurrent({}, previous.remaining);
+    return { form, previous };
+  });
+  const [expenseOpen, setExpenseOpen] = useState(false);
+  const [expenses, setExpenses] = useState<Expense[]>(initial.form.expenses);
+  const [todayCash, setTodayCash] = useState<NumMap>(initial.form.todayCash);
+  const [cashPayable, setCashPayable] = useState<NumMap>(initial.form.cashPayable);
+  const [load, setLoad] = useState<Record<string, LoadRow>>(initial.form.load);
+
+  const [profit, setProfit] = useState(initial.form.profit);
+  const [note, setNote] = useState(initial.form.note);
+  const [publishDate, setPublishDate] = useState(initial.form.publishDate);
+  const [previousCash, setPreviousCash] = useState(initial.previous?.totalCash ?? 0);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  // Edit mode: false until the record being edited has loaded into the form.
-  const [editLoaded, setEditLoaded] = useState(false);
+  // Edit mode: false until the record being edited is in the form (instant when cached).
+  const [editLoaded, setEditLoaded] = useState(editDetail !== null);
 
-  // Edit mode: fill the form from the saved record.
+  // Edit mode without a cached record: fetch it and fill the form.
   useEffect(() => {
-    if (editId === null) return;
+    if (editId === null || editDetail !== null) return;
     let active = true;
     getShopRecord(editId).then(({ record, error }) => {
       if (!active) return;
@@ -126,36 +210,20 @@ export default function AddShopRecordSection({ editId = null }: { editId?: numbe
         setSaveMsg({ ok: false, text: error ?? "Could not load the record." });
         return;
       }
-      const v = record.values;
-      const str = (n: number | undefined) => (n ? String(n) : "");
-      setTodayCash(Object.fromEntries(Object.entries(CASH_COLUMNS).map(([acc, col]) => [acc, str(v[col])])));
-      setCashPayable(
-        Object.fromEntries(Object.entries(PAYABLE_COLUMNS).map(([t, col]) => [t, str(v[col])])),
-      );
-      setLoad(
-        Object.fromEntries(
-          Object.entries(LOAD_PREFIXES).map(([op, p]) => {
-            const purchased = v[`${p}_purchased`] ?? 0;
-            const sold = v[`${p}_sold`] ?? 0;
-            // Current = Remaining - Purchased + Sold
-            const current = (v[`${p}_remaining`] ?? 0) - purchased + sold;
-            return [op, { current: str(current), purchased: str(purchased), sold: str(sold) }];
-          }),
-        ),
-      );
-      // Profit isn't stored: Total Cash = (Today Cash total - Payable total) + Profit
-      const cashTotal = Object.values(CASH_COLUMNS).reduce((a, col) => a + (v[col] ?? 0), 0);
-      const payTotal = Object.values(PAYABLE_COLUMNS).reduce((a, col) => a + (v[col] ?? 0), 0);
-      setProfit(str((v.total_cash ?? 0) - (cashTotal - payTotal)));
-      setExpenses(record.expenses);
-      setNote(record.note);
-      setPublishDate(record.publishDate);
+      const form = formFromDetail(record);
+      setTodayCash(form.todayCash);
+      setCashPayable(form.cashPayable);
+      setLoad(form.load);
+      setProfit(form.profit);
+      setExpenses(form.expenses);
+      setNote(form.note);
+      setPublishDate(form.publishDate);
       setEditLoaded(true);
     });
     return () => {
       active = false;
     };
-  }, [editId]);
+  }, [editId, editDetail]);
 
   // From the latest record published before the selected date:
   // Previous Cash = its Total Cash, and (for a new record) each operator's Current = its remaining load.
@@ -165,14 +233,7 @@ export default function AddShopRecordSection({ editId = null }: { editId?: numbe
       if (!active) return;
       setPreviousCash(totalCash);
       if (editId !== null) return; // keep the edited record's own Current values
-      setLoad((l) => {
-        const next = { ...l };
-        for (const [op, prefix] of Object.entries(LOAD_PREFIXES)) {
-          const v = remaining[prefix] ?? 0;
-          next[op] = { ...(l[op] ?? EMPTY_LOAD_ROW), current: v ? String(v) : "" };
-        }
-        return next;
-      });
+      setLoad((l) => withCurrent(l, remaining));
     });
     return () => {
       active = false;
