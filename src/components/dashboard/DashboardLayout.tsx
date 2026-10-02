@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import { NAV_ITEMS, type TabId } from "./navigation";
 import type { ShopHistoryRecord } from "@/app/dashboard/actions";
 import type { Order } from "@/app/dashboard/orderActions";
+import type { Person } from "@/app/dashboard/peopleActions";
 import DashboardSection from "./sections/DashboardSection";
 import AddShopRecordSection from "./sections/AddShopRecordSection";
 import ShopHistorySection from "./sections/ShopHistorySection";
@@ -19,13 +20,16 @@ export default function DashboardLayout({
   initialHistory,
   initialShopNeeds,
   initialOrders,
+  initialPeople,
 }: {
   userEmail: string;
   initialHistory: ShopHistoryRecord[] | null;
   initialShopNeeds: string;
   initialOrders: Order[] | null;
+  initialPeople: Person[] | null;
 }) {
   const [orders, setOrders] = useState(initialOrders);
+  const [people, setPeople] = useState(initialPeople);
   const [shopNeeds, setShopNeeds] = useState(initialShopNeeds);
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   // Shop History records, preloaded on the server so the screen opens with data.
@@ -52,7 +56,7 @@ export default function DashboardLayout({
     history: <ShopHistorySection onEdit={editRecord} records={history} setRecords={setHistory} />,
     needs: <ShopNeedsSection text={shopNeeds} setText={setShopNeeds} />,
     orders: <OrdersSection orders={orders} setOrders={setOrders} />,
-    people: <PeoplesRecordSection />,
+    people: <PeoplesRecordSection people={people} setPeople={setPeople} />,
     products: <ProductsPriceSection />,
   };
 
