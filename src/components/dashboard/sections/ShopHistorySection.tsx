@@ -11,24 +11,33 @@ function formatDate(d: string) {
   return `${m}/${day}/${y}`;
 }
 
-export default function ShopHistorySection({ onEdit }: { onEdit: (id: number) => void }) {
-  const [records, setRecords] = useState<ShopHistoryRecord[] | null>(null);
+export default function ShopHistorySection({
+  onEdit,
+  records,
+  setRecords,
+}: {
+  onEdit: (id: number) => void;
+  /** Cached records (preloaded with the dashboard); null until first loaded. */
+  records: ShopHistoryRecord[] | null;
+  setRecords: (update: (rs: ShopHistoryRecord[] | null) => ShopHistoryRecord[] | null) => void;
+}) {
   const [deleting, setDeleting] = useState<ShopHistoryRecord | null>(null);
   const [loadError, setLoadError] = useState("");
   const [creator, setCreator] = useState("");
   const [date, setDate] = useState(""); // YYYY-MM-DD from the date picker
 
+  // Show the cached records immediately, then refresh them in the background.
   useEffect(() => {
     let active = true;
     getShopHistory().then(({ records, error }) => {
       if (!active) return;
-      setRecords(records);
-      setLoadError(error ?? "");
+      if (error) setLoadError(error);
+      else setRecords(() => records);
     });
     return () => {
       active = false;
     };
-  }, []);
+  }, [setRecords]);
 
   const creators = [...new Set((records ?? []).map((r) => r.creator))];
   const visible = (records ?? []).filter(
@@ -54,9 +63,7 @@ export default function ShopHistorySection({ onEdit }: { onEdit: (id: number) =>
       </ActionBar>
 
       {records === null ? (
-        <EmptyState>Loading shop history...</EmptyState>
-      ) : loadError ? (
-        <EmptyState>{loadError}</EmptyState>
+        <EmptyState>{loadError || "Loading shop history..."}</EmptyState>
       ) : visible.length === 0 ? (
         <EmptyState>No history records match the selected filters.</EmptyState>
       ) : (

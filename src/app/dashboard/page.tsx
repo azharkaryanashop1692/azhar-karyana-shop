@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { createClient } from "@/lib/supabase/server";
+import { getShopHistory } from "./actions";
 
 export default async function DashboardPage() {
   // The proxy already redirects signed-out users; verify again here so the
@@ -12,5 +13,8 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
-  return <DashboardLayout userEmail={user.email ?? ""} />;
+  // Preload Shop History so that screen shows data immediately.
+  const { records, error } = await getShopHistory();
+
+  return <DashboardLayout userEmail={user.email ?? ""} initialHistory={error ? null : records} />;
 }

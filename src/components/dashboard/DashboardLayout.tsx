@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { NAV_ITEMS, type TabId } from "./navigation";
+import type { ShopHistoryRecord } from "@/app/dashboard/actions";
 import DashboardSection from "./sections/DashboardSection";
 import AddShopRecordSection from "./sections/AddShopRecordSection";
 import ShopHistorySection from "./sections/ShopHistorySection";
@@ -12,8 +13,16 @@ import OrdersSection from "./sections/OrdersSection";
 import PeoplesRecordSection from "./sections/PeoplesRecordSection";
 import ProductsPriceSection from "./sections/ProductsPriceSection";
 
-export default function DashboardLayout({ userEmail }: { userEmail: string }) {
+export default function DashboardLayout({
+  userEmail,
+  initialHistory,
+}: {
+  userEmail: string;
+  initialHistory: ShopHistoryRecord[] | null;
+}) {
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
+  // Shop History records, preloaded on the server so the screen opens with data.
+  const [history, setHistory] = useState(initialHistory);
   const [menuOpen, setMenuOpen] = useState(false);
   // shop_history record being edited on the Add Shop Record screen; null = new record.
   const [editRecordId, setEditRecordId] = useState<number | null>(null);
@@ -33,7 +42,7 @@ export default function DashboardLayout({ userEmail }: { userEmail: string }) {
   const views: Record<TabId, ReactNode> = {
     dashboard: <DashboardSection onNavigate={navigate} />,
     "add-record": <AddShopRecordSection key={editRecordId ?? "new"} editId={editRecordId} />,
-    history: <ShopHistorySection onEdit={editRecord} />,
+    history: <ShopHistorySection onEdit={editRecord} records={history} setRecords={setHistory} />,
     needs: <ShopNeedsSection />,
     orders: <OrdersSection />,
     people: <PeoplesRecordSection />,
