@@ -15,17 +15,25 @@ import ProductsPriceSection from "./sections/ProductsPriceSection";
 export default function DashboardLayout({ userEmail }: { userEmail: string }) {
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
+  // shop_history record being edited on the Add Shop Record screen; null = new record.
+  const [editRecordId, setEditRecordId] = useState<number | null>(null);
 
   const navigate = (id: TabId) => {
+    setEditRecordId(null);
     setActiveTab(id);
     setMenuOpen(false);
     window.scrollTo({ top: 0 });
   };
 
+  const editRecord = (id: number) => {
+    navigate("add-record");
+    setEditRecordId(id);
+  };
+
   const views: Record<TabId, ReactNode> = {
     dashboard: <DashboardSection onNavigate={navigate} />,
-    "add-record": <AddShopRecordSection />,
-    history: <ShopHistorySection />,
+    "add-record": <AddShopRecordSection key={editRecordId ?? "new"} editId={editRecordId} />,
+    history: <ShopHistorySection onEdit={editRecord} />,
     needs: <ShopNeedsSection />,
     orders: <OrdersSection />,
     people: <PeoplesRecordSection />,

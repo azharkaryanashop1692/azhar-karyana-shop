@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Plus, Save, Wallet, X } from "lucide-react";
 import { cashAccounts, loadOperators } from "../mockData";
 import { Card, CardHeader, cn, formatRs } from "../ui";
-import { getPreviousRecord, saveShopRecord } from "@/app/dashboard/actions";
+import { getPreviousRecord, getShopRecord, saveShopRecord } from "@/app/dashboard/actions";
 
 type NumMap = Record<string, string>;
 type LoadRow = { current: string; purchased: string; sold: string };
@@ -88,7 +88,7 @@ function NumInput({
   );
 }
 
-export default function AddShopRecordSection() {
+export default function AddShopRecordSection({ editId = null }: { editId?: number | null }) {
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [todayCash, setTodayCash] = useState<NumMap>({});
@@ -99,14 +99,60 @@ export default function AddShopRecordSection() {
   const [note, setNote] = useState("");
   const [publishDate, setPublishDate] = useState(todayIso);
   const [previousCash, setPreviousCash] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Edit mode: false until the record being edited has loaded into the form.
+  const [editLoaded, setEditLoaded] = useState(false);
+
+  // Edit mode: fill the form from the saved record.
+  useEffect(() => {
+    if (editId === null) return;
+    let active = true;
+    getShopRecord(editId).then(({ record, error }) => {
+      if (!active) return;
+      if (!record) {
+        setSaveMsg({ ok: false, text: error ?? "Could not load the record." });
+        return;
+      }
+      const v = record.values;
+      const str = (n: number | undefined) => (n ? String(n) : "");
+      setTodayCash(Object.fromEntries(Object.entries(CASH_COLUMNS).map(([acc, col]) => [acc, str(v[col])])));
+      setCashPayable(
+        Object.fromEntries(Object.entries(PAYABLE_COLUMNS).map(([t, col]) => [t, str(v[col])])),
+      );
+      setLoad(
+        Object.fromEntries(
+          Object.entries(LOAD_PREFIXES).map(([op, p]) => {
+            const purchased = v[`${p}_purchased`] ?? 0;
+            const sold = v[`${p}_sold`] ?? 0;
+            // Current = Remaining - Purchased + Sold
+            const current = (v[`${p}_remaining`] ?? 0) - purchased + sold;
+            return [op, { current: str(current), purchased: str(purchased), sold: str(sold) }];
+          }),
+        ),
+      );
+      // Profit isn't stored: Total Cash = (Today Cash total - Payable total) + Profit
+      const cashTotal = Object.values(CASH_COLUMNS).reduce((a, col) => a + (v[col] ?? 0), 0);
+      const payTotal = Object.values(PAYABLE_COLUMNS).reduce((a, col) => a + (v[col] ?? 0), 0);
+      setProfit(str((v.total_cash ?? 0) - (cashTotal - payTotal)));
+      setExpenses(record.expenses);
+      setNote(record.note);
+      setPublishDate(record.publishDate);
+      setEditLoaded(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [editId]);
 
   // From the latest record published before the selected date:
-  // Previous Cash = its Total Cash, and each operator's Current = its remaining load.
+  // Previous Cash = its Total Cash, and (for a new record) each operator's Current = its remaining load.
   useEffect(() => {
     let active = true;
     getPreviousRecord(publishDate).then(({ totalCash, remaining }) => {
       if (!active) return;
       setPreviousCash(totalCash);
+      if (editId !== null) return; // keep the edited record's own Current values
       setLoad((l) => {
         const next = { ...l };
         for (const [op, prefix] of Object.entries(LOAD_PREFIXES)) {
@@ -119,9 +165,7 @@ export default function AddShopRecordSection() {
     return () => {
       active = false;
     };
-  }, [publishDate]);
-  const [saving, setSaving] = useState(false);
-  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  }, [publishDate, editId]);
 
   const saveRecord = async () => {
     const row: Record<string, number> = {};
@@ -141,9 +185,11 @@ export default function AddShopRecordSection() {
     row.total_sale = row.total_cash - (previousCash - otherExp);
     setSaving(true);
     setSaveMsg(null);
-    const { error } = await saveShopRecord(row, expenses, publishDate, note);
+    const { error } = await saveShopRecord(row, expenses, publishDate, note, editId ?? undefined);
     setSaving(false);
-    setSaveMsg(error ? { ok: false, text: error } : { ok: true, text: "Record saved." });
+    setSaveMsg(
+      error ? { ok: false, text: error } : { ok: true, text: editId !== null ? "Record updated." : "Record saved." },
+    );
   };
 
   const updateLoad =(op: string, key: keyof LoadRow, v: string) =>
@@ -414,11 +460,17 @@ export default function AddShopRecordSection() {
           <button
             type="button"
             onClick={saveRecord}
-            disabled={saving}
+            disabled={saving || (editId !== null && !editLoaded)}
             className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-accent hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Save className="size-4" />
-            {saving ? "Saving..." : "Save Record"}
+            {editId !== null
+              ? saving
+                ? "Updating..."
+                : "Update Record"
+              : saving
+                ? "Saving..."
+                : "Save Record"}
           </button>
         </div>
       </Card>

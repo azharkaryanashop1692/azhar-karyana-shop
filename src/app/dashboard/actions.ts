@@ -76,11 +76,68 @@ export async function getPreviousRecord(beforeDate: string): Promise<PreviousRec
   };
 }
 
+export type ShopRecordDetail = {
+  /** Raw shop_history column values (numbers). */
+  values: Record<string, number>;
+  publishDate: string;
+  note: string;
+  expenses: ExpenseInput[];
+};
+
+/** One shop_history record with its expenses, for editing. */
+export async function getShopRecord(
+  id: number,
+): Promise<{ record?: ShopRecordDetail; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be logged in to edit a record." };
+
+  const { data, error } = await supabase.from("shop_history").select("*").eq("id", id).maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "Record not found." };
+
+  const { data: exp, error: expError } = await supabase
+    .from("expenses")
+    .select("name, price, status")
+    .eq("shop_history_id", id)
+    .order("id");
+  if (expError) return { error: expError.message };
+
+  const values: Record<string, number> = {};
+  for (const [k, v] of Object.entries(data)) if (typeof v === "number" || typeof v === "string") values[k] = Number(v) || 0;
+  return {
+    record: {
+      values,
+      publishDate: data.publish_date,
+      note: data.note ?? "",
+      expenses: exp.map((e) => ({ name: e.name, price: Number(e.price) || 0, status: e.status })),
+    },
+  };
+}
+
+export async function deleteShopRecord(id: number): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be logged in to delete a record." };
+
+  // Linked expenses are removed by the foreign key's ON DELETE CASCADE.
+  const { data, error } = await supabase.from("shop_history").delete().eq("id", id).select("id");
+  if (error) return { error: error.message };
+  if (!data.length) return { error: "Record not found." };
+  return {};
+}
+
+/** Inserts a new record, or updates record `id` when given. */
 export async function saveShopRecord(
   row: ShopHistoryRow,
   expenses: ExpenseInput[] = [],
   publishDate?: string,
   note?: string,
+  id?: number,
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
@@ -88,7 +145,7 @@ export async function saveShopRecord(
   } = await supabase.auth.getUser();
   if (!user) return { error: "You must be logged in to save a record." };
 
-  const values: Record<string, number | string> = {};
+  const values: Record<string, number | string | null> = {};
   for (const [key, v] of Object.entries(row)) {
     if (!/^[a-z0-9_]+$/.test(key)) return { error: "Invalid field." };
     values[key] = Number(v) || 0;
@@ -98,15 +155,29 @@ export async function saveShopRecord(
     values.publish_date = publishDate;
   }
   const trimmedNote = String(note ?? "").trim();
-  if (trimmedNote) values.note = trimmedNote;
-  if (user.email) values.creator_email = user.email;
+  values.note = trimmedNote || null;
 
-  const { data: record, error } = await supabase
-    .from("shop_history")
-    .insert(values)
-    .select("id")
-    .single();
-  if (error) return { error: error.message };
+  let record: { id: number };
+  if (id) {
+    // Update keeps the original creator; its expenses are replaced below.
+    const { data, error } = await supabase
+      .from("shop_history")
+      .update(values)
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
+    if (error) return { error: error.message };
+    if (!data) return { error: "Record not found." };
+    record = data;
+
+    const { error: delError } = await supabase.from("expenses").delete().eq("shop_history_id", id);
+    if (delError) return { error: `Record updated, but expenses failed: ${delError.message}` };
+  } else {
+    if (user.email) values.creator_email = user.email;
+    const { data, error } = await supabase.from("shop_history").insert(values).select("id").single();
+    if (error) return { error: error.message };
+    record = data;
+  }
 
   if (expenses.length > 0) {
     const { error: expError } = await supabase.from("expenses").insert(
@@ -117,7 +188,9 @@ export async function saveShopRecord(
         status: e.status,
       })),
     );
-    if (expError) return { error: `Record saved, but expenses failed: ${expError.message}` };
+    if (expError) {
+      return { error: `Record ${id ? "updated" : "saved"}, but expenses failed: ${expError.message}` };
+    }
   }
 
   return {};

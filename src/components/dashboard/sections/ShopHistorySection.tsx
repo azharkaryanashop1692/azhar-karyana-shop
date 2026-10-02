@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar, User } from "lucide-react";
-import { getShopHistory, type ShopHistoryRecord } from "@/app/dashboard/actions";
-import { ActionBar, Card, EmptyState, StatusSelect, cn, formatRs } from "../ui";
+import { Calendar, Trash2, User, X } from "lucide-react";
+import { deleteShopRecord, getShopHistory, type ShopHistoryRecord } from "@/app/dashboard/actions";
+import { ActionBar, Card, EditDeleteActions, EmptyState, StatusSelect, cn, formatRs } from "../ui";
 
 /** "YYYY-MM-DD" -> "MM/DD/YYYY" for display. */
 function formatDate(d: string) {
@@ -11,8 +11,9 @@ function formatDate(d: string) {
   return `${m}/${day}/${y}`;
 }
 
-export default function ShopHistorySection() {
+export default function ShopHistorySection({ onEdit }: { onEdit: (id: number) => void }) {
   const [records, setRecords] = useState<ShopHistoryRecord[] | null>(null);
+  const [deleting, setDeleting] = useState<ShopHistoryRecord | null>(null);
   const [loadError, setLoadError] = useState("");
   const [creator, setCreator] = useState("");
   const [date, setDate] = useState(""); // YYYY-MM-DD from the date picker
@@ -62,9 +63,12 @@ export default function ShopHistorySection() {
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {visible.map((r) => (
             <Card key={r.id} className="flex flex-col gap-4">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted">Total Cash</p>
-                <p className="mt-0.5 text-2xl font-bold text-white">{formatRs(r.totalCash)}</p>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted">Total Cash</p>
+                  <p className="mt-0.5 text-2xl font-bold text-white">{formatRs(r.totalCash)}</p>
+                </div>
+                <EditDeleteActions onEdit={() => onEdit(r.id)} onDelete={() => setDeleting(r)} />
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
                 <span className="inline-flex items-center gap-1.5">
@@ -90,6 +94,108 @@ export default function ShopHistorySection() {
           ))}
         </div>
       )}
+
+      {deleting && (
+        <DeleteRecordModal
+          record={deleting}
+          onClose={() => setDeleting(null)}
+          onDeleted={(id) => {
+            setRecords((rs) => (rs ?? []).filter((x) => x.id !== id));
+            setDeleting(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function DeleteRecordModal({
+  record,
+  onClose,
+  onDeleted,
+}: {
+  record: ShopHistoryRecord;
+  onClose: () => void;
+  onDeleted: (id: number) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !busy) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, busy]);
+
+  const confirmDelete = async () => {
+    setBusy(true);
+    setError("");
+    const { error } = await deleteShopRecord(record.id);
+    if (error) {
+      setBusy(false);
+      setError(error);
+      return;
+    }
+    onDeleted(record.id);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4"
+      onClick={() => !busy && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-record-title"
+        className="w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Card>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 id="delete-record-title" className="text-lg font-semibold text-white">
+              Delete Record
+            </h3>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={busy}
+              aria-label="Close"
+              className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-white/10 hover:text-white"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+          <p className="text-sm leading-relaxed text-muted">
+            Are you sure you want to delete the record of{" "}
+            <span className="font-semibold text-white">{formatDate(record.publishDate)}</span> with Total
+            Cash <span className="font-semibold text-white">{formatRs(record.totalCash)}</span>? Its
+            expenses will be deleted too. This cannot be undone.
+          </p>
+          {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+          <div className="flex justify-end gap-3 pt-5">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={busy}
+              className="rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-white/15 disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Trash2 className="size-4" />
+              {busy ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
