@@ -1,29 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  ChevronDown,
-  Eye,
-  Info,
-  MapPin,
-  Phone,
-  Plus,
-  Save,
-  UserCheck,
-} from "lucide-react";
+import { ChevronDown, Eye, Info, MapPin, Phone, Plus, Save } from "lucide-react";
 import { deletePerson, getPeople, savePerson, type Person } from "@/app/dashboard/peopleActions";
 import type { OrderItem } from "@/app/dashboard/orderActions";
 import { PERSON_STATUSES, type PersonStatus } from "@/lib/personStatus";
-import { peopleKpis } from "../mockData";
 import {
   ActionBar,
   Badge,
   Card,
   EditDeleteActions,
   EmptyState,
-  KpiCard,
   PrimaryButton,
   SearchInput,
   StatusSelect,
@@ -83,12 +70,6 @@ export default function PeoplesRecordSection({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <KpiCard icon={ArrowDownLeft} label="Total Receivable" value={peopleKpis.totalReceivable} />
-        <KpiCard icon={ArrowUpRight} label="Total Payable" value={peopleKpis.totalPayable} tone="danger" />
-        <KpiCard icon={UserCheck} label="Active People" value={peopleKpis.activePeople} tone="neutral" />
-      </div>
-
       <ActionBar>
         <SearchInput value={query} onChange={setQuery} />
         <StatusSelect value={status} onChange={setStatus} options={[...PERSON_STATUSES]} />
