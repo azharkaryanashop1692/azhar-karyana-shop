@@ -7,6 +7,7 @@ import { NAV_ITEMS, type TabId } from "./navigation";
 import type { ShopHistoryRecord } from "@/app/dashboard/actions";
 import type { Order } from "@/app/dashboard/orderActions";
 import type { Person } from "@/app/dashboard/peopleActions";
+import type { Product } from "@/app/dashboard/productActions";
 import DashboardSection from "./sections/DashboardSection";
 import AddShopRecordSection from "./sections/AddShopRecordSection";
 import ShopHistorySection from "./sections/ShopHistorySection";
@@ -21,13 +22,16 @@ export default function DashboardLayout({
   initialShopNeeds,
   initialOrders,
   initialPeople,
+  initialProducts,
 }: {
   userEmail: string;
   initialHistory: ShopHistoryRecord[] | null;
   initialShopNeeds: string;
   initialOrders: Order[] | null;
   initialPeople: Person[] | null;
+  initialProducts: Product[] | null;
 }) {
+  const [products, setProducts] = useState(initialProducts);
   const [orders, setOrders] = useState(initialOrders);
   const [people, setPeople] = useState(initialPeople);
   const [shopNeeds, setShopNeeds] = useState(initialShopNeeds);
@@ -57,7 +61,7 @@ export default function DashboardLayout({
     needs: <ShopNeedsSection text={shopNeeds} setText={setShopNeeds} />,
     orders: <OrdersSection orders={orders} setOrders={setOrders} />,
     people: <PeoplesRecordSection people={people} setPeople={setPeople} />,
-    products: <ProductsPriceSection />,
+    products: <ProductsPriceSection products={products} setProducts={setProducts} />,
   };
 
   const activeLabel = NAV_ITEMS.find((n) => n.id === activeTab)?.label ?? "";

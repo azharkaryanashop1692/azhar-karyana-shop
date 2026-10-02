@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getShopHistory, getShopNeeds } from "./actions";
 import { getOrders } from "./orderActions";
 import { getPeople } from "./peopleActions";
+import { getProducts } from "./productActions";
 
 export default async function DashboardPage() {
   // The proxy already redirects signed-out users; verify again here so the
@@ -21,7 +22,8 @@ export default async function DashboardPage() {
     { text: shopNeeds },
     { orders, error: ordersError },
     { people, error: peopleError },
-  ] = await Promise.all([getShopHistory(), getShopNeeds(), getOrders(), getPeople()]);
+    { products, error: productsError },
+  ] = await Promise.all([getShopHistory(), getShopNeeds(), getOrders(), getPeople(), getProducts()]);
 
   return (
     <DashboardLayout
@@ -30,6 +32,7 @@ export default async function DashboardPage() {
       initialShopNeeds={shopNeeds}
       initialOrders={ordersError ? null : orders}
       initialPeople={peopleError ? null : people}
+      initialProducts={productsError ? null : products}
     />
   );
 }
