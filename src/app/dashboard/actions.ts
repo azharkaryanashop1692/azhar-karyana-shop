@@ -138,7 +138,7 @@ export async function saveShopRecord(
   publishDate?: string,
   note?: string,
   id?: number,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; duplicate?: boolean }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -157,6 +157,16 @@ export async function saveShopRecord(
   const trimmedNote = String(note ?? "").trim();
   values.note = trimmedNote || null;
 
+  // Only one record per publish date (defaults to today in the DB).
+  const date = publishDate || new Date().toISOString().slice(0, 10);
+  const [y, m, d] = date.split("-");
+  const duplicateError = { error: `already record saved for the ${m}/${d}/${y}.`, duplicate: true };
+  let dupQuery = supabase.from("shop_history").select("id").eq("publish_date", date).limit(1);
+  if (id) dupQuery = dupQuery.neq("id", id);
+  const { data: existing, error: dupError } = await dupQuery;
+  if (dupError) return { error: dupError.message };
+  if (existing.length) return duplicateError;
+
   let record: { id: number };
   if (id) {
     // Update keeps the original creator; its expenses are replaced below.
@@ -166,7 +176,7 @@ export async function saveShopRecord(
       .eq("id", id)
       .select("id")
       .maybeSingle();
-    if (error) return { error: error.message };
+    if (error) return error.code === "23505" ? duplicateError : { error: error.message };
     if (!data) return { error: "Record not found." };
     record = data;
 
@@ -175,7 +185,7 @@ export async function saveShopRecord(
   } else {
     if (user.email) values.creator_email = user.email;
     const { data, error } = await supabase.from("shop_history").insert(values).select("id").single();
-    if (error) return { error: error.message };
+    if (error) return error.code === "23505" ? duplicateError : { error: error.message };
     record = data;
   }
 

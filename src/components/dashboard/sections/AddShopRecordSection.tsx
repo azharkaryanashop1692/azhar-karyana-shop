@@ -186,8 +186,9 @@ export default function AddShopRecordSection({ editId = null }: { editId?: numbe
     row.total_sale = row.total_cash - (previousCash - otherExp);
     setSaving(true);
     setSaveMsg(null);
-    const { error } = await saveShopRecord(row, expenses, publishDate, note, editId ?? undefined);
+    const { error, duplicate } = await saveShopRecord(row, expenses, publishDate, note, editId ?? undefined);
     setSaving(false);
+    if (duplicate && error) window.alert(error);
     setSaveMsg(
       error ? { ok: false, text: error } : { ok: true, text: editId !== null ? "Record updated." : "Record saved." },
     );
