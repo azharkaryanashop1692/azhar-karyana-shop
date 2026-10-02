@@ -312,7 +312,7 @@ function PersonFormModal({
   );
 }
 
-function ViewPersonModal({ person, onClose }: { person: Person; onClose: () => void }) {
+export function ViewPersonModal({ person, onClose }: { person: Person; onClose: () => void }) {
   return (
     <Modal title="Person Details" onClose={onClose} wide>
       <div className="space-y-4">

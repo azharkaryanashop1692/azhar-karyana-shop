@@ -55,7 +55,15 @@ export default function DashboardLayout({
   };
 
   const views: Record<TabId, ReactNode> = {
-    dashboard: <DashboardSection onNavigate={navigate} />,
+    dashboard: (
+      <DashboardSection
+        onNavigate={navigate}
+        history={history}
+        orders={orders}
+        people={people}
+        shopNeeds={shopNeeds}
+      />
+    ),
     "add-record": (
       <AddShopRecordSection
         key={editRecordId ?? "new"}
