@@ -1,4 +1,4 @@
-import { Bell, LogOut, Menu } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { logout } from "@/app/login/actions";
 
 export default function Header({
@@ -29,14 +29,6 @@ export default function Header({
         </div>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="relative grid size-9 place-items-center rounded-lg text-muted hover:bg-white/10 hover:text-white"
-          >
-            <Bell className="size-5" />
-            <span className="absolute right-2 top-2 size-2 rounded-full bg-accent" />
-          </button>
           <div className="flex items-center gap-2 rounded-xl bg-white/5 py-1.5 pl-1.5 pr-3 ring-1 ring-white/10">
             <div className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-accent to-emerald-700 text-sm font-bold text-black">
               AU
