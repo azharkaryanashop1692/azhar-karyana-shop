@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Plus, Save, Wallet, X } from "lucide-react";
 import { cashAccounts, loadOperators } from "../mockData";
-import { Card, CardHeader, cn, formatRs } from "../ui";
+import { Card, CardHeader, cn, formatRs, playBeep } from "../ui";
 import { getPreviousRecord, getShopRecord, saveShopRecord } from "@/app/dashboard/actions";
 
 type NumMap = Record<string, string>;
@@ -168,6 +168,7 @@ export default function AddShopRecordSection({ editId = null }: { editId?: numbe
   }, [publishDate, editId]);
 
   const saveRecord = async () => {
+    playBeep();
     const row: Record<string, number> = {};
     for (const [acc, col] of Object.entries(CASH_COLUMNS)) row[col] = num(todayCash[acc]);
     for (const [title, col] of Object.entries(PAYABLE_COLUMNS)) row[col] = num(cashPayable[title]);

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Calendar, Trash2, User, X } from "lucide-react";
 import { deleteShopRecord, getShopHistory, type ShopHistoryRecord } from "@/app/dashboard/actions";
-import { ActionBar, Card, EditDeleteActions, EmptyState, StatusSelect, cn, formatRs } from "../ui";
+import { ActionBar, Card, EditDeleteActions, EmptyState, StatusSelect, cn, formatRs, playBeep } from "../ui";
 
 /** "YYYY-MM-DD" -> "MM/DD/YYYY" for display. */
 function formatDate(d: string) {
@@ -130,6 +130,7 @@ function DeleteRecordModal({
   }, [onClose, busy]);
 
   const confirmDelete = async () => {
+    playBeep();
     setBusy(true);
     setError("");
     const { error } = await deleteShopRecord(record.id);

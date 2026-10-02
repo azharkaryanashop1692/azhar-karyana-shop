@@ -226,6 +226,27 @@ export function EmptyState({ children }: { children: ReactNode }) {
   );
 }
 
+let audioCtx: AudioContext | null = null;
+
+/** Short alert beep, played on button clicks such as Save / Update / Delete. */
+export function playBeep(frequency = 880, durationMs = 150) {
+  try {
+    audioCtx ??= new AudioContext();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = frequency;
+    const t = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + durationMs / 1000);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + durationMs / 1000);
+  } catch {
+    // Audio not available (e.g. blocked by the browser); the action still works.
+  }
+}
+
 export function formatRs(n: number) {
   return `RS ${n.toLocaleString("en-US")}`;
 }
