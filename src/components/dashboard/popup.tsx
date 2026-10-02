@@ -188,13 +188,18 @@ const CARD_ITEMS = 3;
 export function CardItemsPreview({ items, onMore }: { items: OrderItem[]; onMore: () => void }) {
   if (items.length === 0) return null;
   const extra = items.length - CARD_ITEMS;
+  const first = Math.max(0, extra); // index of the first shown item, for numbering
+  // Same row design as the popup's ItemsList.
   return (
-    <div className="rounded-xl border border-white/5 bg-[#1a1a1a]">
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-[#1a1a1a]">
       <ul className="divide-y divide-white/5">
         {items.slice(-CARD_ITEMS).map((item, i) => (
-          <li key={i} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-            <span className="min-w-0 truncate text-white">{item.name}</span>
-            <span className="shrink-0 font-semibold text-white">{formatRs(item.price)}</span>
+          <li key={i} className="flex items-center gap-3 px-4 py-2.5">
+            <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent/15 text-xs font-bold text-accent">
+              {first + i + 1}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">{item.name}</span>
+            <span className="shrink-0 text-sm font-semibold text-white">{formatRs(item.price)}</span>
           </li>
         ))}
       </ul>
@@ -202,7 +207,7 @@ export function CardItemsPreview({ items, onMore }: { items: OrderItem[]; onMore
         <button
           type="button"
           onClick={onMore}
-          className="w-full border-t border-white/5 px-3 py-2 text-left text-xs font-medium text-accent hover:underline"
+          className="w-full border-t border-white/10 bg-white/[0.03] px-4 py-2.5 text-left text-xs font-medium text-accent hover:underline"
         >
           +{extra} more {extra === 1 ? "item" : "items"}
         </button>
