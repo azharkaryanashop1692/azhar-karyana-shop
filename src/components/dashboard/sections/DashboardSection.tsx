@@ -107,8 +107,8 @@ export default function DashboardSection({
                 <thead>
                   <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wide text-muted">
                     <th className="pb-3 font-medium">Creator</th>
-                    <th className="pb-3 font-medium">Sale (RS)</th>
-                    <th className="pb-3 text-right font-medium">Profit (RS)</th>
+                    <th className="pb-3 font-medium">Profit (RS)</th>
+                    <th className="pb-3 text-right font-medium">Sale (RS)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -125,13 +125,11 @@ export default function DashboardSection({
                           </div>
                         </div>
                       </td>
-                      <td className="py-3.5">
-                        <SignedBadge value={r.totalSale} />
-                      </td>
-                      <td
-                        className={`py-3.5 text-right font-semibold ${profitOf(r) < 0 ? "text-danger" : "text-white"}`}
-                      >
+                      <td className={`py-3.5 font-semibold ${profitOf(r) < 0 ? "text-danger" : "text-white"}`}>
                         {formatRs(profitOf(r))}
+                      </td>
+                      <td className="py-3.5 text-right">
+                        <SignedBadge value={r.totalSale} />
                       </td>
                     </tr>
                   ))}
