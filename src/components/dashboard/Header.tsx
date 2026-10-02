@@ -31,10 +31,10 @@ export default function Header({
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-2 rounded-xl bg-white/5 py-1.5 pl-1.5 pr-3 ring-1 ring-white/10">
             <div className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-accent to-emerald-700 text-sm font-bold text-black">
-              AU
+              AK
             </div>
             <div className="hidden leading-tight sm:block">
-              <p className="text-sm font-semibold text-white">Admin User</p>
+              <p className="text-sm font-semibold text-white">Azhar Karyana Store</p>
               <p className="max-w-40 truncate text-xs text-muted">{userEmail}</p>
             </div>
           </div>
