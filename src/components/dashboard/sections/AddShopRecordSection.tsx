@@ -388,7 +388,7 @@ export default function AddShopRecordSection({
               <thead className="max-md:hidden">
                 <tr className="text-left text-xs uppercase tracking-wide text-muted">
                   <th className="pb-2 font-medium">Today Cash</th>
-                  <th className="pb-2 pl-2 font-medium">Today Cash</th>
+                  <th className="pb-2 pl-2 font-medium" />
                   <th className="pb-2 pl-2 font-medium">Payable Amount</th>
                 </tr>
               </thead>
