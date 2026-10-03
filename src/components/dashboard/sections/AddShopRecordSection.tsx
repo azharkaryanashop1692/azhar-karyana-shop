@@ -516,8 +516,8 @@ export default function AddShopRecordSection({
                 <th className="pb-2 pl-2 font-medium">Current</th>
                 <th className="pb-2 pl-2 font-medium">Purchased</th>
                 <th className="pb-2 pl-2 font-medium">Total</th>
-                <th className="pb-2 pl-2 font-medium">Sold</th>
                 <th className="pb-2 pl-2 font-medium">Remain</th>
+                <th className="pb-2 pl-2 font-medium">Sold</th>
               </tr>
             </thead>
             <tbody className="max-md:block">
@@ -546,7 +546,7 @@ export default function AddShopRecordSection({
                       {total.toLocaleString("en-US")}
                     </td>
                     <td className="py-1.5 pl-2 max-md:p-0">
-                      <MobileLabel>Sold</MobileLabel>
+                      <MobileLabel>Remain</MobileLabel>
                       <NumInput value={row?.sold ?? ""} onChange={(v) => updateLoad(operator, "sold", v)} />
                     </td>
                     <td
@@ -555,7 +555,7 @@ export default function AddShopRecordSection({
                         remain < 0 ? "text-danger" : "text-accent",
                       )}
                     >
-                      <MobileLabel>Remain</MobileLabel>
+                      <MobileLabel>Sold</MobileLabel>
                       {remain.toLocaleString("en-US")}
                     </td>
                   </tr>
