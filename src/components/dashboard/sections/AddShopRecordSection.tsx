@@ -335,6 +335,51 @@ export default function AddShopRecordSection({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-5">
+        {/* Expenses linked to this record */}
+        <Card className="xl:col-span-2">
+          <CardHeader title="Expenses" subtitle="Expenses linked with this record" />
+          <div className="space-y-3">
+            {expenses.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted">No expenses added yet.</p>
+            ) : (
+              expenses.map((e, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-[#1a1a1a] px-3 py-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-white">{e.name}</p>
+                    <p className="text-xs text-muted">{e.status}</p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold text-danger">{formatRs(e.price)}</span>
+                  <button
+                    type="button"
+                    onClick={() => setExpenses((list) => list.filter((_, j) => j !== i))}
+                    aria-label={`Delete expense ${e.name}`}
+                    className="grid size-8 shrink-0 place-items-center rounded-lg text-danger transition hover:bg-danger/15"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              ))
+            )}
+            <div className="space-y-2 border-t border-white/10 pt-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-muted">Load Expenses</span>
+                <span className="font-semibold text-danger">{formatRs(totals.loadExp)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-muted">Other Expenses</span>
+                <span className="font-semibold text-danger">{formatRs(totals.otherExp)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-muted">Remaining Previous Cash</span>
+                <span className="font-semibold text-accent">{formatRs(totals.remainingPrev)}</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         {/* Cash denominations */}
         <Card className="xl:col-span-3">
           <CardHeader title="Cash Record" subtitle="Today cash and payable amount across all accounts" />
@@ -402,51 +447,6 @@ export default function AddShopRecordSection({
                 </tr>
               </tbody>
             </table>
-          </div>
-        </Card>
-
-        {/* Expenses linked to this record */}
-        <Card className="xl:col-span-2">
-          <CardHeader title="Expenses" subtitle="Expenses linked with this record" />
-          <div className="space-y-3">
-            {expenses.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted">No expenses added yet.</p>
-            ) : (
-              expenses.map((e, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-[#1a1a1a] px-3 py-2"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-white">{e.name}</p>
-                    <p className="text-xs text-muted">{e.status}</p>
-                  </div>
-                  <span className="shrink-0 text-sm font-semibold text-danger">{formatRs(e.price)}</span>
-                  <button
-                    type="button"
-                    onClick={() => setExpenses((list) => list.filter((_, j) => j !== i))}
-                    aria-label={`Delete expense ${e.name}`}
-                    className="grid size-8 shrink-0 place-items-center rounded-lg text-danger transition hover:bg-danger/15"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                </div>
-              ))
-            )}
-            <div className="space-y-2 border-t border-white/10 pt-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-muted">Load Expenses</span>
-                <span className="font-semibold text-danger">{formatRs(totals.loadExp)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-muted">Other Expenses</span>
-                <span className="font-semibold text-danger">{formatRs(totals.otherExp)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-muted">Remaining Previous Cash</span>
-                <span className="font-semibold text-accent">{formatRs(totals.remainingPrev)}</span>
-              </div>
-            </div>
           </div>
         </Card>
       </div>
