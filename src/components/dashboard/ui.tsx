@@ -260,8 +260,9 @@ export function playBeep(frequency = 880, durationMs = 150) {
   }
 }
 
+/** "RS 1,234" with a non-breaking space, so the amount never wraps onto two lines. */
 export function formatRs(n: number) {
-  return `RS ${n.toLocaleString("en-US")}`;
+  return `RS\u00a0${n.toLocaleString("en-US")}`;
 }
 
 /** Case-insensitive match of `query` against any of the given fields. */

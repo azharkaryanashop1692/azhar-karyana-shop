@@ -29,6 +29,11 @@ body {
   color-scheme: dark;
 }
 
+/* Table column titles stay on one line (e.g. "PROFIT (RS)"); tables scroll instead. */
+th {
+  white-space: nowrap;
+}
+
 /* Thin dark scrollbars for tables / panels */
 * {
   scrollbar-width: thin;
