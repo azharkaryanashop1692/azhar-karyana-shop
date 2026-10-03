@@ -133,6 +133,8 @@ export function SearchInput({
   );
 }
 
+const ALL = "__all__";
+
 export function StatusSelect({
   value,
   onChange,
@@ -148,10 +150,15 @@ export function StatusSelect({
     <label className="relative block">
       <select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        // "All" clears the filter, which shows the placeholder again.
+        onChange={(e) => onChange(e.target.value === ALL ? "" : e.target.value)}
         className="w-full appearance-none rounded-xl border border-white/10 bg-[#1a1a1a] py-2.5 pl-3 pr-9 text-sm text-white focus:border-accent/60 focus:outline-none sm:w-44"
       >
-        <option value="">{placeholder}</option>
+        {/* Placeholder shown in the box but not listed as a choice. */}
+        <option value="" hidden>
+          {placeholder}
+        </option>
+        <option value={ALL}>All</option>
         {options.map((o) => (
           <option key={o} value={o}>
             {o}
