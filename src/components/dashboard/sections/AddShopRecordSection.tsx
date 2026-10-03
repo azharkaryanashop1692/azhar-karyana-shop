@@ -97,6 +97,37 @@ function NumInput({
   );
 }
 
+/** Phone Cash Record list: heading, one labelled input per row, and a total. */
+function CashList({
+  title,
+  rows,
+  total,
+  totalClass,
+}: {
+  title: string;
+  rows: { label: string; value: string; onChange: (v: string) => void }[];
+  total: number;
+  totalClass: string;
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{title}</p>
+      <div className="space-y-2">
+        {rows.map((r) => (
+          <label key={r.label} className="flex items-center gap-3">
+            <span className="w-28 shrink-0 text-sm font-medium text-white">{r.label}</span>
+            <NumInput value={r.value} onChange={r.onChange} />
+          </label>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between text-sm">
+        <span className="font-semibold text-muted">Total</span>
+        <span className={cn("font-semibold", totalClass)}>{formatRs(total)}</span>
+      </div>
+    </div>
+  );
+}
+
 /** Column label for phones, where the table header row is hidden and rows stack. */
 function MobileLabel({ children }: { children: React.ReactNode }) {
   return <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted md:hidden">{children}</span>;
@@ -383,35 +414,63 @@ export default function AddShopRecordSection({
         {/* Cash denominations */}
         <Card className="xl:col-span-3">
           <CardHeader title="Cash Record" subtitle="Today cash and payable amount across all accounts" />
-          <div className="overflow-x-auto">
-            <table className={cn(STACK_TABLE, "md:min-w-[480px]")}>
-              <thead className="max-md:hidden">
+
+          {/* Phones: Today Cash list first, then the Payable Amount list. */}
+          <div className="space-y-5 md:hidden">
+            <CashList
+              title="Today Cash"
+              rows={cashAccounts.map((acc) => ({
+                label: acc,
+                value: todayCash[acc] ?? "",
+                onChange: (v: string) => setTodayCash((m) => ({ ...m, [acc]: v })),
+              }))}
+              total={totals.todayTotal}
+              totalClass="text-accent"
+            />
+            <CashList
+              title="Payable Amount"
+              rows={CASH_PAYABLE_TITLES.map((t) => ({
+                label: t,
+                value: cashPayable[t] ?? "",
+                onChange: (v: string) => setCashPayable((m) => ({ ...m, [t]: v })),
+              }))}
+              total={totals.cashPayableTotal}
+              totalClass="text-danger"
+            />
+            <div className="flex items-center justify-between border-t border-white/10 pt-3 text-sm">
+              <span className="font-semibold text-muted">Remaining Cash</span>
+              <span className={cn("font-semibold", totals.remainingCash < 0 ? "text-danger" : "text-accent")}>
+                {formatRs(totals.remainingCash)}
+              </span>
+            </div>
+          </div>
+
+          {/* Tablet / desktop: side-by-side table. */}
+          <div className="overflow-x-auto max-md:hidden">
+            <table className="w-full min-w-[480px] text-sm">
+              <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-muted">
                   <th className="pb-2 font-medium">Today Cash</th>
                   <th className="pb-2 pl-2 font-medium" />
                   <th className="pb-2 pl-2 font-medium">Payable Amount</th>
                 </tr>
               </thead>
-              <tbody className="max-md:block">
+              <tbody>
                 {cashAccounts.map((acc, i) => {
                   const payTitle = CASH_PAYABLE_TITLES[i];
                   return (
-                    <tr key={acc} className={cn(STACK_ROW, "max-md:grid-cols-2")}>
-                      <td className="py-1.5 pr-2 font-medium text-white max-md:col-span-2 max-md:p-0">{acc}</td>
-                      <td className="py-1.5 pl-2 max-md:p-0">
-                        <MobileLabel>Today Cash</MobileLabel>
+                    <tr key={acc}>
+                      <td className="py-1.5 pr-2 font-medium text-white">{acc}</td>
+                      <td className="py-1.5 pl-2">
                         <NumInput
                           value={todayCash[acc] ?? ""}
                           onChange={(v) => setTodayCash((m) => ({ ...m, [acc]: v }))}
                         />
                       </td>
-                      <td className="py-1.5 pl-2 max-md:p-0">
+                      <td className="py-1.5 pl-2">
                         {payTitle && (
-                          <label className="block md:flex md:items-center md:gap-2">
-                            <span className="mb-1 block text-[11px] uppercase tracking-wide text-muted md:mb-0 md:w-16 md:shrink-0 md:text-sm md:normal-case md:tracking-normal md:font-medium md:text-white">
-                              <span className="md:hidden">Payable · </span>
-                              {payTitle}
-                            </span>
+                          <label className="flex items-center gap-2">
+                            <span className="w-16 shrink-0 text-sm font-medium text-white">{payTitle}</span>
                             <NumInput
                               value={cashPayable[payTitle] ?? ""}
                               onChange={(v) => setCashPayable((m) => ({ ...m, [payTitle]: v }))}
@@ -422,23 +481,17 @@ export default function AddShopRecordSection({
                     </tr>
                   );
                 })}
-                <tr className="border-t border-white/10 max-md:grid max-md:grid-cols-2 max-md:gap-2 max-md:pt-3">
-                  <td className="pt-3 font-semibold text-muted max-md:col-span-2 max-md:p-0">Total</td>
-                  <td className="pl-2 pt-3 font-semibold text-accent max-md:p-0">
-                    <MobileLabel>Today Cash</MobileLabel>
-                    {formatRs(totals.todayTotal)}
-                  </td>
-                  <td className="pl-2 pt-3 font-semibold text-danger max-md:p-0">
-                    <MobileLabel>Payable</MobileLabel>
-                    {formatRs(totals.cashPayableTotal)}
-                  </td>
+                <tr className="border-t border-white/10">
+                  <td className="pt-3 font-semibold text-muted">Total</td>
+                  <td className="pl-2 pt-3 font-semibold text-accent">{formatRs(totals.todayTotal)}</td>
+                  <td className="pl-2 pt-3 font-semibold text-danger">{formatRs(totals.cashPayableTotal)}</td>
                 </tr>
-                <tr className="max-md:flex max-md:items-center max-md:justify-between max-md:pt-3">
-                  <td className="pt-3 font-semibold text-muted max-md:p-0">Remaining Cash</td>
+                <tr>
+                  <td className="pt-3 font-semibold text-muted">Remaining Cash</td>
                   <td
                     colSpan={2}
                     className={cn(
-                      "pl-2 pt-3 font-semibold max-md:p-0",
+                      "pl-2 pt-3 font-semibold",
                       totals.remainingCash < 0 ? "text-danger" : "text-accent",
                     )}
                   >
