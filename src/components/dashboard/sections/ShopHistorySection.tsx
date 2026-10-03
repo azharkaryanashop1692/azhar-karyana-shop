@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Calendar, Trash2, User, X } from "lucide-react";
 import { deleteShopRecord, getShopHistory, type ShopHistoryRecord } from "@/app/dashboard/actions";
-import { ActionBar, Card, EditDeleteActions, EmptyState, StatusSelect, cn, formatRs, playBeep } from "../ui";
+import { ActionBar, Card, EditDeleteActions, EmptyState, cn, formatRs, playBeep } from "../ui";
 
 /** "YYYY-MM-DD" -> "MM/DD/YYYY" for display. */
 function formatDate(d: string) {
@@ -23,7 +23,6 @@ export default function ShopHistorySection({
 }) {
   const [deleting, setDeleting] = useState<ShopHistoryRecord | null>(null);
   const [loadError, setLoadError] = useState("");
-  const [creator, setCreator] = useState("");
   const [date, setDate] = useState(""); // YYYY-MM-DD from the date picker
 
   // Show the cached records immediately, then refresh them in the background.
@@ -39,20 +38,11 @@ export default function ShopHistorySection({
     };
   }, [setRecords]);
 
-  const creators = [...new Set((records ?? []).map((r) => r.creator))];
-  const visible = (records ?? []).filter(
-    (r) => (!creator || r.creator === creator) && (!date || r.publishDate === date),
-  );
+  const visible = (records ?? []).filter((r) => !date || r.publishDate === date);
 
   return (
     <div className="space-y-6">
       <ActionBar>
-        <StatusSelect
-          value={creator}
-          onChange={setCreator}
-          options={creators}
-          placeholder="Select Creator"
-        />
         <input
           type="date"
           value={date}
