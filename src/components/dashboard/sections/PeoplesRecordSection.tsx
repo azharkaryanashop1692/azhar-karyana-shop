@@ -73,7 +73,9 @@ export default function PeoplesRecordSection({
       <ActionBar>
         <SearchInput value={query} onChange={setQuery} placeholder="Search by person name..." />
         <StatusSelect value={status} onChange={setStatus} options={[...PERSON_STATUSES]} />
-        <PrimaryButton onClick={() => setEditing("new")}>Add New Person</PrimaryButton>
+        <PrimaryButton onClick={() => setEditing("new")} className="max-sm:order-first">
+          Add New Person
+        </PrimaryButton>
       </ActionBar>
 
       {people === null ? (

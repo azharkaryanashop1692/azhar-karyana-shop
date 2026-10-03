@@ -167,16 +167,21 @@ export function PrimaryButton({
   children,
   onClick,
   icon: Icon = Plus,
+  className,
 }: {
   children: ReactNode;
   onClick?: () => void;
   icon?: IconType;
+  className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-[#00e676]"
+      className={cn(
+        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-[#00e676]",
+        className,
+      )}
     >
       <Icon className="size-4" />
       {children}
