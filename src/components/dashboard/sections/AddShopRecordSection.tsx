@@ -159,11 +159,9 @@ function formFromDetail(detail: ShopRecordDetail): FormState {
     cashPayable: Object.fromEntries(Object.entries(PAYABLE_COLUMNS).map(([t, col]) => [t, str(v[col])])),
     load: Object.fromEntries(
       Object.entries(LOAD_PREFIXES).map(([op, p]) => {
-        const purchased = v[`${p}_purchased`] ?? 0;
-        const sold = v[`${p}_sold`] ?? 0;
-        // Current = Remaining - Purchased + Sold
-        const current = (v[`${p}_remaining`] ?? 0) - purchased + sold;
-        return [op, { current: str(current), purchased: str(purchased), sold: str(sold) }];
+        // The input column (titled "Remain") is stored in *_remaining.
+        // Current isn't stored: it is filled from the previous record's remaining load.
+        return [op, { current: "", purchased: str(v[`${p}_purchased`]), sold: str(v[`${p}_remaining`]) }];
       }),
     ),
     profit: str((v.total_cash ?? 0) - (cashTotal - payTotal)),
@@ -216,7 +214,7 @@ export default function AddShopRecordSection({
       ? formFromDetail(editDetail)
       : { todayCash: {}, cashPayable: {}, load: {}, profit: "", expenses: [], note: "", publishDate: todayIso() };
     const previous = previousFromHistory(history, form.publishDate);
-    if (!editDetail && previous) form.load = withCurrent({}, previous.remaining);
+    if (previous) form.load = withCurrent(form.load, previous.remaining);
     return { form, previous };
   });
   const [expenseOpen, setExpenseOpen] = useState(false);
@@ -247,7 +245,11 @@ export default function AddShopRecordSection({
       const form = formFromDetail(record);
       setTodayCash(form.todayCash);
       setCashPayable(form.cashPayable);
-      setLoad(form.load);
+      setLoad((l) =>
+        Object.fromEntries(
+          Object.entries(form.load).map(([op, r]) => [op, { ...r, current: l[op]?.current ?? "" }]),
+        ),
+      );
       setProfit(form.profit);
       setExpenses(form.expenses);
       setNote(form.note);
@@ -260,19 +262,18 @@ export default function AddShopRecordSection({
   }, [editId, editDetail]);
 
   // From the latest record published before the selected date:
-  // Previous Cash = its Total Cash, and (for a new record) each operator's Current = its remaining load.
+  // Previous Cash = its Total Cash, and each operator's Current = its remaining load.
   useEffect(() => {
     let active = true;
     getPreviousRecord(publishDate).then(({ totalCash, remaining }) => {
       if (!active) return;
       setPreviousCash(totalCash);
-      if (editId !== null) return; // keep the edited record's own Current values
       setLoad((l) => withCurrent(l, remaining));
     });
     return () => {
       active = false;
     };
-  }, [publishDate, editId]);
+  }, [publishDate]);
 
   const saveRecord = async () => {
     playBeep();
@@ -282,9 +283,8 @@ export default function AddShopRecordSection({
     for (const [op, prefix] of Object.entries(LOAD_PREFIXES)) {
       const r = load[op];
       row[`${prefix}_purchased`] = num(r?.purchased);
-      row[`${prefix}_sold`] = num(r?.sold);
-      // Remaining = Current + Purchased - Sold (the Remain column)
-      row[`${prefix}_remaining`] = num(r?.current) + num(r?.purchased) - num(r?.sold);
+      // The typed "Remain" value; tomorrow's Current is read from it.
+      row[`${prefix}_remaining`] = num(r?.sold);
     }
     // Total Cash = Today Cash (Sale panel, i.e. remaining cash) + Profit
     row.total_cash = sum(todayCash) - sum(cashPayable) + num(profit);
@@ -320,7 +320,7 @@ export default function AddShopRecordSection({
     const previous = previousFromHistory(history, date);
     if (!previous) return;
     setPreviousCash(previous.totalCash);
-    if (editId === null) setLoad((l) => withCurrent(l, previous.remaining));
+    setLoad((l) => withCurrent(l, previous.remaining));
   };
 
   const updateLoad =(op: string, key: keyof LoadRow, v: string) =>
