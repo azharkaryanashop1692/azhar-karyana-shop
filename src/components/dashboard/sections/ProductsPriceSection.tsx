@@ -74,7 +74,7 @@ export default function ProductsPriceSection({
             value={query}
             onChange={setQuery}
             placeholder="Search by product name..."
-            className="w-full sm:w-64"
+            className="max-sm:basis-full sm:w-64 sm:flex-none"
           />
         </CardHeader>
 
@@ -113,20 +113,19 @@ export default function ProductsPriceSection({
                   </td>
                 </tr>
               ))}
-              {visible.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-10 text-center text-muted">
-                    {products === null
-                      ? loadError || "Loading products..."
-                      : products.length
-                        ? "No products match your search."
-                        : "No products yet."}
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
+        {/* Outside the scrollable table so it stays fully visible on phones. */}
+        {visible.length === 0 && (
+          <p className="py-10 text-center text-sm text-muted">
+            {products === null
+              ? loadError || "Loading products..."
+              : products.length
+                ? "No products match your search."
+                : "No products yet."}
+          </p>
+        )}
       </Card>
 
       {editing && (
