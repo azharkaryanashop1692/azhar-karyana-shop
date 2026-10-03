@@ -300,6 +300,17 @@ export default function AddShopRecordSection({
       error ? { ok: false, text: error } : { ok: true, text: editId !== null ? "Record updated." : "Record saved." },
     );
     if (!error) onSaved?.();
+    // New record saved: clear the form for the next one (Current and the date are kept).
+    if (!error && editId === null) {
+      setTodayCash({});
+      setCashPayable({});
+      setLoad((l) =>
+        Object.fromEntries(Object.entries(l).map(([op, r]) => [op, { ...EMPTY_LOAD_ROW, current: r.current }])),
+      );
+      setExpenses([]);
+      setProfit("");
+      setNote("");
+    }
   };
 
   // New date: show Previous Cash / Current from the cached history right away;
