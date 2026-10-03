@@ -29,6 +29,11 @@ body {
   color-scheme: dark;
 }
 
+/* Button titles stay on one line everywhere (e.g. "Save Record"). */
+button {
+  white-space: nowrap;
+}
+
 /* Table column titles stay on one line (e.g. "PROFIT (RS)"); tables scroll instead. */
 th {
   white-space: nowrap;

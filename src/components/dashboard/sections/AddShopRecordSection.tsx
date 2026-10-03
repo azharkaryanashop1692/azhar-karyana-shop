@@ -628,9 +628,11 @@ export default function AddShopRecordSection({
             <p className="mt-1 text-2xl font-bold">{formatRs(totals.totalSale)}</p>
           </div>
         </div>
-        <div className="mt-5 flex items-center justify-end gap-4">
+        <div className="mt-5 flex flex-wrap items-center justify-end gap-3 sm:gap-4">
           {saveMsg && (
-            <p className={cn("text-sm", saveMsg.ok ? "text-accent" : "text-danger")}>{saveMsg.text}</p>
+            <p className={cn("text-sm max-sm:w-full max-sm:text-right", saveMsg.ok ? "text-accent" : "text-danger")}>
+              {saveMsg.text}
+            </p>
           )}
           <input
             type="date"
@@ -638,13 +640,13 @@ export default function AddShopRecordSection({
             onChange={(e) => changePublishDate(e.target.value)}
             aria-label="Publish date"
             suppressHydrationWarning
-            className="rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-2.5 text-sm text-white [color-scheme:dark] focus:border-accent/60 focus:outline-none"
+            className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-2.5 text-sm text-white [color-scheme:dark] focus:border-accent/60 focus:outline-none sm:flex-none"
           />
           <button
             type="button"
             onClick={saveRecord}
             disabled={saving || (editId !== null && !editLoaded)}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-accent hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-accent hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Save className="size-4" />
             {editId !== null
