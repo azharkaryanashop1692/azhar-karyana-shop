@@ -111,7 +111,7 @@ function CashList({
 }) {
   return (
     <div>
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{title}</p>
+      <p className="mb-2 text-sm font-bold uppercase tracking-wide text-white">{title}</p>
       <div className="space-y-2">
         {rows.map((r) => (
           <label key={r.label} className="flex items-center gap-3">
@@ -461,9 +461,9 @@ export default function AddShopRecordSection({
             <table className="w-full min-w-[480px] text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-muted">
-                  <th className="pb-2 font-medium">Today Cash</th>
+                  <th className="pb-2 text-sm font-bold text-white">Today Cash</th>
                   <th className="pb-2 pl-2 font-medium" />
-                  <th className="pb-2 pl-2 font-medium">Payable Amount</th>
+                  <th className="pb-2 pl-2 text-sm font-bold text-white">Payable Amount</th>
                 </tr>
               </thead>
               <tbody>
