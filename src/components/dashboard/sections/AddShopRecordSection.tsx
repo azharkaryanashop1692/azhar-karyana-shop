@@ -387,7 +387,7 @@ export default function AddShopRecordSection({
             <table className={cn(STACK_TABLE, "md:min-w-[480px]")}>
               <thead className="max-md:hidden">
                 <tr className="text-left text-xs uppercase tracking-wide text-muted">
-                  <th className="pb-2 font-medium">Account</th>
+                  <th className="pb-2 font-medium">Today Cash</th>
                   <th className="pb-2 pl-2 font-medium">Today Cash</th>
                   <th className="pb-2 pl-2 font-medium">Payable Amount</th>
                 </tr>
