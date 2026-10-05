@@ -19,7 +19,19 @@ const EXPENSE_STATUSES = ["Load", "Other"] as const;
 type ExpenseStatus = (typeof EXPENSE_STATUSES)[number];
 type Expense = { name: string; price: number; status: ExpenseStatus };
 
-const CASH_PAYABLE_TITLES = ["Hafiz", "Telenor", "Jazz", "Zong1", "Zong2", "Waqas", "Abu", "Others"];
+const CASH_PAYABLE_TITLES = [
+  "Hafiz",
+  "Telenor",
+  "Jazz",
+  "Zong1",
+  "Zong2",
+  "Waqas",
+  "Abu",
+  "Azhar",
+  "Tassawar",
+  "Mazhar",
+  "Others",
+];
 
 // shop_history column names for each input.
 const CASH_COLUMNS: Record<string, string> = {
@@ -32,6 +44,8 @@ const CASH_COLUMNS: Record<string, string> = {
   Waqas: "waqas",
   Azhar: "azhar",
   Tassawar: "tassawar",
+  Mazhar: "mazhar",
+  Others: "others",
 };
 const PAYABLE_COLUMNS: Record<string, string> = {
   Hafiz: "pay_hafiz",
@@ -41,6 +55,9 @@ const PAYABLE_COLUMNS: Record<string, string> = {
   Zong2: "pay_zong2",
   Waqas: "pay_waqas",
   Abu: "pay_abu",
+  Azhar: "pay_azhar",
+  Tassawar: "pay_tassawar",
+  Mazhar: "pay_mazhar",
   Others: "pay_others",
 };
 const LOAD_PREFIXES: Record<string, string> = {

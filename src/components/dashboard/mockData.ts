@@ -44,6 +44,8 @@ export const cashAccounts = [
   "Waqas",
   "Azhar",
   "Tassawar",
+  "Mazhar",
+  "Others",
 ];
 
 export const payableAccounts = ["Abbas", "Waqas", "Azhar", "Tassawar", "Wholesaler"];

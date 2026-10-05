@@ -20,6 +20,8 @@ const CASH_COLUMNS = [
   "waqas",
   "azhar",
   "tassawar",
+  "mazhar",
+  "others",
 ];
 const PAYABLE_COLUMNS = [
   "pay_hafiz",
@@ -29,6 +31,9 @@ const PAYABLE_COLUMNS = [
   "pay_zong2",
   "pay_waqas",
   "pay_abu",
+  "pay_azhar",
+  "pay_tassawar",
+  "pay_mazhar",
   "pay_others",
 ];
 
