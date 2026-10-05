@@ -595,7 +595,9 @@ export default function AddShopRecordSection({
         <div className="mt-4 flex flex-col gap-4 sm:flex-row">
           <div className="w-full shrink-0 rounded-xl border border-white/5 bg-[#1a1a1a] p-4 sm:w-72">
             <p className="text-xs font-medium uppercase tracking-wide text-muted">Additional Load</p>
-            <p className="mt-1 text-2xl font-bold text-accent">{formatRs(totals.additionalLoad)}</p>
+            <p className={`mt-1 text-2xl font-bold ${totals.additionalLoad < 0 ? "text-danger" : "text-accent"}`}>
+              {formatRs(totals.additionalLoad)}
+            </p>
             <p className="mt-1 text-xs text-muted">
               Sum of Remain (excl. Jazzcash) minus {ADDITIONAL_LOAD_THRESHOLD.toLocaleString("en-US")}
             </p>
