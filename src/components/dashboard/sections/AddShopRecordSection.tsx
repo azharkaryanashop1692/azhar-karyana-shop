@@ -70,7 +70,7 @@ const LOAD_PREFIXES: Record<string, string> = {
   Jazzcash: "jazzcash",
 };
 
-// Remaining load (excluding Jazzcash) above this counts as additional load.
+// Additional load = sum of Remain (excluding Jazzcash) minus this; negative when below.
 const ADDITIONAL_LOAD_THRESHOLD = 40000;
 
 const EMPTY_LOAD_ROW: LoadRow = { current: "", purchased: "", sold: "" };
@@ -357,8 +357,8 @@ export default function AddShopRecordSection({
     const totalSale = remainingCash + num(profit) - remainingPrev;
     const remainingLoad = Object.entries(load)
       .filter(([op]) => op !== "Jazzcash")
-      .reduce((a, [, r]) => a + num(r.current) + num(r.purchased) - num(r.sold), 0);
-    const additionalLoad = Math.max(0, remainingLoad - ADDITIONAL_LOAD_THRESHOLD);
+      .reduce((a, [, r]) => a + num(r.sold), 0);
+    const additionalLoad = remainingLoad - ADDITIONAL_LOAD_THRESHOLD;
     return { exp, loadExp, otherExp, additionalLoad, todayTotal, cashPayableTotal, remainingCash, totalSale, remainingPrev };
   }, [todayCash, cashPayable, load, expenses, profit, previousCash]);
 
@@ -597,7 +597,7 @@ export default function AddShopRecordSection({
             <p className="text-xs font-medium uppercase tracking-wide text-muted">Additional Load</p>
             <p className="mt-1 text-2xl font-bold text-accent">{formatRs(totals.additionalLoad)}</p>
             <p className="mt-1 text-xs text-muted">
-              Remaining load (excl. Jazzcash) above {ADDITIONAL_LOAD_THRESHOLD.toLocaleString("en-US")}
+              Sum of Remain (excl. Jazzcash) minus {ADDITIONAL_LOAD_THRESHOLD.toLocaleString("en-US")}
             </p>
           </div>
           <label className="flex min-w-0 flex-1 flex-col rounded-xl border border-white/5 bg-[#1a1a1a] p-4">
