@@ -23,6 +23,7 @@ const CASH_PAYABLE_TITLES = [
   "Hafiz",
   "Telenor",
   "Jazz",
+  "Ufone",
   "Zong1",
   "Zong2",
   "Waqas",
@@ -51,6 +52,7 @@ const PAYABLE_COLUMNS: Record<string, string> = {
   Hafiz: "pay_hafiz",
   Telenor: "pay_telenor",
   Jazz: "pay_jazz",
+  Ufone: "ufone",
   Zong1: "pay_zong1",
   Zong2: "pay_zong2",
   Waqas: "pay_waqas",
@@ -484,16 +486,19 @@ export default function AddShopRecordSection({
                 </tr>
               </thead>
               <tbody>
-                {cashAccounts.map((acc, i) => {
+                {Array.from({ length: Math.max(cashAccounts.length, CASH_PAYABLE_TITLES.length) }, (_, i) => {
+                  const acc = cashAccounts[i];
                   const payTitle = CASH_PAYABLE_TITLES[i];
                   return (
-                    <tr key={acc}>
+                    <tr key={i}>
                       <td className="py-1.5 pr-2 font-medium text-white">{acc}</td>
                       <td className="py-1.5 pl-2">
-                        <NumInput
-                          value={todayCash[acc] ?? ""}
-                          onChange={(v) => setTodayCash((m) => ({ ...m, [acc]: v }))}
-                        />
+                        {acc && (
+                          <NumInput
+                            value={todayCash[acc] ?? ""}
+                            onChange={(v) => setTodayCash((m) => ({ ...m, [acc]: v }))}
+                          />
+                        )}
                       </td>
                       <td className="py-1.5 pl-2">
                         {payTitle && (

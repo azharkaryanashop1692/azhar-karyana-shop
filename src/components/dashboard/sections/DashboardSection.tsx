@@ -27,6 +27,7 @@ const PAYABLE_COLUMNS = [
   "pay_hafiz",
   "pay_telenor",
   "pay_jazz",
+  "ufone",
   "pay_zong1",
   "pay_zong2",
   "pay_waqas",
