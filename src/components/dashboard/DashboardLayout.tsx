@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { X } from "lucide-react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
@@ -39,7 +40,7 @@ export default function DashboardLayout({
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   // Shop History records, preloaded on the server so the screen opens with data.
   const [history, setHistory] = useState(initialHistory);
-  // shop_history record being edited on the Add Shop Record screen; null = new record.
+  // shop_history record open in the edit popup (from Shop History); null = popup closed.
   const [editRecordId, setEditRecordId] = useState<number | null>(null);
 
   const navigate = (id: TabId) => {
@@ -48,9 +49,11 @@ export default function DashboardLayout({
     window.scrollTo({ top: 0 });
   };
 
-  const editRecord = (id: number) => {
-    navigate("add-record");
-    setEditRecordId(id);
+  // Keep the cached Shop History current so Previous Cash / Current stay instant.
+  const refreshHistory = () => {
+    getShopHistory().then(({ records, error }) => {
+      if (!error) setHistory(records);
+    });
   };
 
   const views: Record<TabId, ReactNode> = {
@@ -64,20 +67,9 @@ export default function DashboardLayout({
       />
     ),
     "add-record": (
-      <AddShopRecordSection
-        key={editRecordId ?? "new"}
-        editId={editRecordId}
-        editDetail={history?.find((r) => r.id === editRecordId)?.detail ?? null}
-        history={history}
-        onSaved={() => {
-          // Keep the cached Shop History current so Previous Cash / Current stay instant.
-          getShopHistory().then(({ records, error }) => {
-            if (!error) setHistory(records);
-          });
-        }}
-      />
+      <AddShopRecordSection history={history} onSaved={refreshHistory} />
     ),
-    history: <ShopHistorySection onEdit={editRecord} records={history} setRecords={setHistory} />,
+    history: <ShopHistorySection onEdit={setEditRecordId} records={history} setRecords={setHistory} />,
     needs: <ShopNeedsSection text={shopNeeds} setText={setShopNeeds} />,
     orders: <OrdersSection orders={orders} setOrders={setOrders} />,
     people: <PeoplesRecordSection people={people} setPeople={setPeople} />,
@@ -97,6 +89,41 @@ export default function DashboardLayout({
         </main>
       </div>
       <BottomNav active={activeTab} onSelect={navigate} />
+
+      {/* Edit popup: the full Add Shop Record form filled with the record's data. */}
+      {editRecordId !== null && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/70 p-2 sm:p-4"
+          onClick={() => setEditRecordId(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Edit Shop Record"
+            className="mx-auto w-full max-w-[1600px] rounded-2xl border border-white/10 bg-background p-4 sm:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Edit Shop Record</h3>
+              <button
+                type="button"
+                onClick={() => setEditRecordId(null)}
+                aria-label="Close"
+                className="grid size-8 place-items-center rounded-lg text-muted transition hover:bg-white/10 hover:text-white"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <AddShopRecordSection
+              key={editRecordId}
+              editId={editRecordId}
+              editDetail={history?.find((r) => r.id === editRecordId)?.detail ?? null}
+              history={history}
+              onSaved={refreshHistory}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
