@@ -119,7 +119,10 @@ export default function DashboardLayout({
               editId={editRecordId}
               editDetail={history?.find((r) => r.id === editRecordId)?.detail ?? null}
               history={history}
-              onSaved={refreshHistory}
+              onSaved={() => {
+                refreshHistory();
+                setEditRecordId(null);
+              }}
             />
           </div>
         </div>
