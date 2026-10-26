@@ -361,7 +361,8 @@ export default function AddShopRecordSection({
       .filter(([op]) => op !== "Jazzcash")
       .reduce((a, [, r]) => a + num(r.sold), 0);
     const additionalLoad = remainingLoad - ADDITIONAL_LOAD_THRESHOLD;
-    return { exp, loadExp, otherExp, additionalLoad, todayTotal, cashPayableTotal, remainingCash, totalSale, remainingPrev };
+    const todayCashTotal = remainingCash + additionalLoad;
+    return { exp, loadExp, otherExp, additionalLoad, todayCashTotal, todayTotal, cashPayableTotal, remainingCash, totalSale, remainingPrev };
   }, [todayCash, cashPayable, load, expenses, profit, previousCash]);
 
   return (
@@ -606,6 +607,13 @@ export default function AddShopRecordSection({
             <p className="mt-1 text-xs text-muted">
               Sum of Remain (excl. Jazzcash) minus {ADDITIONAL_LOAD_THRESHOLD.toLocaleString("en-US")}
             </p>
+          </div>
+          <div className="w-full shrink-0 rounded-xl border border-white/5 bg-[#1a1a1a] p-4 sm:w-72">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted">Today Cash</p>
+            <p className={`mt-1 text-2xl font-bold ${totals.todayCashTotal < 0 ? "text-danger" : "text-accent"}`}>
+              {formatRs(totals.todayCashTotal)}
+            </p>
+            <p className="mt-1 text-xs text-muted">Remaining Cash plus/minus Additional Load</p>
           </div>
           <label className="flex min-w-0 flex-1 flex-col rounded-xl border border-white/5 bg-[#1a1a1a] p-4">
             <span className="text-xs font-medium uppercase tracking-wide text-muted">Note</span>
