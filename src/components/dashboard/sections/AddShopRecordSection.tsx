@@ -294,6 +294,24 @@ export default function AddShopRecordSection({
     };
   }, [publishDate]);
 
+  const totals = useMemo(() => {
+    const todayTotal = sum(todayCash);
+    const cashPayableTotal = sum(cashPayable);
+    const remainingCash = todayTotal - cashPayableTotal;
+    const exp = expenses.reduce((a, e) => a + e.price, 0);
+    const loadExp = expenses.filter((e) => e.status === "Load").reduce((a, e) => a + e.price, 0);
+    const otherExp = exp - loadExp;
+    const remainingPrev = previousCash - otherExp;
+    const remainingLoad = Object.entries(load)
+      .filter(([op]) => op !== "Jazzcash")
+      .reduce((a, [, r]) => a + num(r.sold), 0);
+    const additionalLoad = remainingLoad - ADDITIONAL_LOAD_THRESHOLD;
+    const todayCashTotal = remainingCash + additionalLoad;
+    const totalTodayCash = todayCashTotal + num(profit);
+    const totalSale = totalTodayCash - remainingPrev;
+    return { exp, loadExp, otherExp, additionalLoad, todayCashTotal, totalTodayCash, todayTotal, cashPayableTotal, remainingCash, totalSale, remainingPrev };
+  }, [todayCash, cashPayable, load, expenses, profit, previousCash]);
+
   const saveRecord = async () => {
     playBeep();
     const row: Record<string, number> = {};
@@ -307,9 +325,8 @@ export default function AddShopRecordSection({
     }
     // Total Cash = Today Cash (Sale panel, i.e. remaining cash) + Profit
     row.total_cash = sum(todayCash) - sum(cashPayable) + num(profit);
-    // Total Sale = Today Cash + Profit - Remaining Previous Cash (Previous Cash - Other expenses)
-    const otherExp = expenses.filter((e) => e.status === "Other").reduce((a, e) => a + e.price, 0);
-    row.total_sale = row.total_cash - (previousCash - otherExp);
+    // Total Sale = Total Today Cash - Remaining Previous Cash (same as the Sale panel)
+    row.total_sale = totals.totalSale;
     setSaving(true);
     setSaveMsg(null);
     const { error, duplicate } = await saveShopRecord(row, expenses, publishDate, note, editId ?? undefined);
@@ -347,24 +364,6 @@ export default function AddShopRecordSection({
       ...l,
       [op]: { ...(l[op] ?? EMPTY_LOAD_ROW), [key]: v },
     }));
-
-  const totals = useMemo(() => {
-    const todayTotal = sum(todayCash);
-    const cashPayableTotal = sum(cashPayable);
-    const remainingCash = todayTotal - cashPayableTotal;
-    const exp = expenses.reduce((a, e) => a + e.price, 0);
-    const loadExp = expenses.filter((e) => e.status === "Load").reduce((a, e) => a + e.price, 0);
-    const otherExp = exp - loadExp;
-    const remainingPrev = previousCash - otherExp;
-    const totalSale = remainingCash + num(profit) - remainingPrev;
-    const remainingLoad = Object.entries(load)
-      .filter(([op]) => op !== "Jazzcash")
-      .reduce((a, [, r]) => a + num(r.sold), 0);
-    const additionalLoad = remainingLoad - ADDITIONAL_LOAD_THRESHOLD;
-    const todayCashTotal = remainingCash + additionalLoad;
-    const totalTodayCash = todayCashTotal + num(profit);
-    return { exp, loadExp, otherExp, additionalLoad, todayCashTotal, totalTodayCash, todayTotal, cashPayableTotal, remainingCash, totalSale, remainingPrev };
-  }, [todayCash, cashPayable, load, expenses, profit, previousCash]);
 
   return (
     <div className="space-y-6">
@@ -600,23 +599,21 @@ export default function AddShopRecordSection({
           </table>
         </div>
         <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-          <div className="w-full shrink-0 rounded-xl border border-white/5 bg-[#1a1a1a] p-4 sm:w-72">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted">Additional Load</p>
-            <p className={`mt-1 text-2xl font-bold ${totals.additionalLoad < 0 ? "text-danger" : "text-accent"}`}>
-              {formatRs(totals.additionalLoad)}
-            </p>
-            <p className="mt-1 text-xs text-muted">
-              Sum of Remain (excl. Jazzcash) minus {ADDITIONAL_LOAD_THRESHOLD.toLocaleString("en-US")}
-            </p>
-          </div>
-          <div className="w-full shrink-0 rounded-xl border border-white/5 bg-[#1a1a1a] p-4 sm:w-72">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted">Today Cash</p>
-            <p className={`mt-1 text-2xl font-bold ${totals.todayCashTotal < 0 ? "text-danger" : "text-accent"}`}>
-              {formatRs(totals.todayCashTotal)}
-            </p>
-            <p className="mt-1 text-xs text-muted">Remaining Cash plus/minus Additional Load</p>
-          </div>
-          <label className="flex min-w-0 flex-1 flex-col rounded-xl border border-white/5 bg-[#1a1a1a] p-4">
+          <SaleStat
+            className="w-full shrink-0 sm:w-72"
+            label="Additional Load"
+            value={formatRs(totals.additionalLoad)}
+            tone={totals.additionalLoad < 0 ? "danger" : "accent"}
+            hint={`Sum of Remain (excl. Jazzcash) − ${ADDITIONAL_LOAD_THRESHOLD.toLocaleString("en-US")}`}
+          />
+          <SaleStat
+            className="w-full shrink-0 sm:w-72"
+            label="Today Cash"
+            value={formatRs(totals.todayCashTotal)}
+            tone={totals.todayCashTotal < 0 ? "danger" : "accent"}
+            hint="Remaining Cash ± Additional Load"
+          />
+          <label className="flex min-h-[128px] min-w-0 flex-1 flex-col rounded-xl border border-white/5 bg-[#1a1a1a] p-4">
             <span className="text-xs font-medium uppercase tracking-wide text-muted">Note</span>
             <textarea
               value={note}
@@ -637,33 +634,38 @@ export default function AddShopRecordSection({
             label="Today Cash"
             value={formatRs(totals.todayCashTotal)}
             tone={totals.todayCashTotal < 0 ? "danger" : undefined}
+            hint="From the Load Record card"
           />
-          <label className="block rounded-xl border border-white/5 bg-[#1a1a1a] p-4">
+          <label className="flex min-h-[128px] flex-col justify-between gap-2 rounded-xl border border-white/5 bg-[#1a1a1a] p-4">
             <span className="text-xs font-medium uppercase tracking-wide text-muted">Profit</span>
             <NumInput
               value={profit}
               onChange={setProfit}
-              className="mt-1 text-xl font-bold text-accent"
+              className="text-xl font-bold text-accent"
             />
+            <span className="min-h-4 text-xs text-muted">Enter today&apos;s profit</span>
           </label>
           <SaleStat
             label="Total Today Cash"
             value={formatRs(totals.totalTodayCash)}
             tone={totals.totalTodayCash < 0 ? "danger" : undefined}
+            hint="Today Cash + Profit"
           />
           <SaleStat
             label="Remaining Previous Cash"
             value={formatRs(totals.remainingPrev)}
             tone={totals.remainingPrev < 0 ? "danger" : undefined}
+            hint="Previous Cash − Other Expenses"
           />
           <div
             className={cn(
-              "rounded-xl p-4",
+              "flex min-h-[128px] flex-col justify-between gap-2 rounded-xl p-4",
               totals.totalSale < 0 ? "bg-danger text-white" : "bg-accent text-black",
             )}
           >
             <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Total Sale</p>
-            <p className="mt-1 text-2xl font-bold">{formatRs(totals.totalSale)}</p>
+            <p className="text-2xl font-bold">{formatRs(totals.totalSale)}</p>
+            <p className="min-h-4 text-xs opacity-70">Total Today Cash − Remaining Previous Cash</p>
           </div>
         </div>
         <div className="mt-5 flex flex-wrap items-center justify-end gap-3 sm:gap-4">
@@ -823,26 +825,37 @@ function AddExpenseModal({
   );
 }
 
+/** Stat card: label on top, value in the middle, hint at the bottom, evenly spaced. */
 function SaleStat({
   label,
   value,
   tone,
+  hint,
+  className,
 }: {
   label: string;
   value: string;
   tone?: "accent" | "danger";
+  hint?: string;
+  className?: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/5 bg-[#1a1a1a] p-4">
+    <div
+      className={cn(
+        "flex min-h-[128px] flex-col justify-between gap-2 rounded-xl border border-white/5 bg-[#1a1a1a] p-4",
+        className,
+      )}
+    >
       <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
       <p
         className={cn(
-          "mt-1 text-2xl font-bold",
+          "text-2xl font-bold",
           tone === "accent" ? "text-accent" : tone === "danger" ? "text-danger" : "text-white",
         )}
       >
         {value}
       </p>
+      <p className="min-h-4 text-xs text-muted">{hint}</p>
     </div>
   );
 }
