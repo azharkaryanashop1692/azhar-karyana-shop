@@ -362,7 +362,8 @@ export default function AddShopRecordSection({
       .reduce((a, [, r]) => a + num(r.sold), 0);
     const additionalLoad = remainingLoad - ADDITIONAL_LOAD_THRESHOLD;
     const todayCashTotal = remainingCash + additionalLoad;
-    return { exp, loadExp, otherExp, additionalLoad, todayCashTotal, todayTotal, cashPayableTotal, remainingCash, totalSale, remainingPrev };
+    const totalTodayCash = todayCashTotal + num(profit);
+    return { exp, loadExp, otherExp, additionalLoad, todayCashTotal, totalTodayCash, todayTotal, cashPayableTotal, remainingCash, totalSale, remainingPrev };
   }, [todayCash, cashPayable, load, expenses, profit, previousCash]);
 
   return (
@@ -631,7 +632,7 @@ export default function AddShopRecordSection({
       {/* Sale panel */}
       <Card className="bg-gradient-to-br from-[#2b2b2b] via-[#1f2a22] to-[#1a1a1a]">
         <CardHeader title="Sale" subtitle="Auto-calculated from the record above" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <SaleStat
             label="Today Cash"
             value={formatRs(totals.todayCashTotal)}
@@ -645,6 +646,11 @@ export default function AddShopRecordSection({
               className="mt-1 text-xl font-bold text-accent"
             />
           </label>
+          <SaleStat
+            label="Total Today Cash"
+            value={formatRs(totals.totalTodayCash)}
+            tone={totals.totalTodayCash < 0 ? "danger" : undefined}
+          />
           <SaleStat
             label="Remaining Previous Cash"
             value={formatRs(totals.remainingPrev)}
