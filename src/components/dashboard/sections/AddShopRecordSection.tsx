@@ -634,8 +634,8 @@ export default function AddShopRecordSection({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <SaleStat
             label="Today Cash"
-            value={formatRs(totals.remainingCash)}
-            tone={totals.remainingCash < 0 ? "danger" : undefined}
+            value={formatRs(totals.todayCashTotal)}
+            tone={totals.todayCashTotal < 0 ? "danger" : undefined}
           />
           <label className="block rounded-xl border border-white/5 bg-[#1a1a1a] p-4">
             <span className="text-xs font-medium uppercase tracking-wide text-muted">Profit</span>
