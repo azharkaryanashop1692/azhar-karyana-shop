@@ -170,9 +170,13 @@ type FormState = {
 function formFromDetail(detail: ShopRecordDetail): FormState {
   const v = detail.values;
   const str = (n: number | undefined) => (n ? String(n) : "");
-  // Profit isn't stored: Total Cash = (Today Cash total - Payable total) + Profit
+  // Profit isn't stored: Total Cash = (Today Cash total - Payable total) + Additional Load + Profit
   const cashTotal = Object.values(CASH_COLUMNS).reduce((a, col) => a + (v[col] ?? 0), 0);
   const payTotal = Object.values(PAYABLE_COLUMNS).reduce((a, col) => a + (v[col] ?? 0), 0);
+  const additionalLoad =
+    Object.entries(LOAD_PREFIXES)
+      .filter(([op]) => op !== "Jazzcash")
+      .reduce((a, [, p]) => a + (v[`${p}_remaining`] ?? 0), 0) - ADDITIONAL_LOAD_THRESHOLD;
   return {
     todayCash: Object.fromEntries(Object.entries(CASH_COLUMNS).map(([acc, col]) => [acc, str(v[col])])),
     cashPayable: Object.fromEntries(Object.entries(PAYABLE_COLUMNS).map(([t, col]) => [t, str(v[col])])),
@@ -183,7 +187,7 @@ function formFromDetail(detail: ShopRecordDetail): FormState {
         return [op, { current: "", purchased: str(v[`${p}_purchased`]), sold: str(v[`${p}_remaining`]) }];
       }),
     ),
-    profit: str((v.total_cash ?? 0) - (cashTotal - payTotal)),
+    profit: str((v.total_cash ?? 0) - (cashTotal - payTotal + additionalLoad)),
     expenses: detail.expenses,
     note: detail.note,
     publishDate: detail.publishDate,
@@ -323,8 +327,8 @@ export default function AddShopRecordSection({
       // The typed "Remain" value; tomorrow's Current is read from it.
       row[`${prefix}_remaining`] = num(r?.sold);
     }
-    // Total Cash = Today Cash (Sale panel, i.e. remaining cash) + Profit
-    row.total_cash = sum(todayCash) - sum(cashPayable) + num(profit);
+    // Total Cash = Total Today Cash (Sale panel: Today Cash + Profit)
+    row.total_cash = totals.totalTodayCash;
     // Total Sale = Total Today Cash - Remaining Previous Cash (same as the Sale panel)
     row.total_sale = totals.totalSale;
     setSaving(true);
